@@ -1,17 +1,17 @@
 import express, { Request, Response } from 'express';
-import { MongoClient } from 'mongodb';
 import { TeamService } from './services/TeamService';
 import { MatchService } from './services/MatchService';
+import { Database } from './Database';
 
-function start(): void {
+async function start(): Promise<void> {
   console.log('Hello World');
 
-  const uri = 'mongodb://localhost:27017';
-  const client = new MongoClient(uri);
+  const uri = 'mongodb://localhost:27017/test';
 
   const app = express();
 
-  const db = client.db('test');
+  // Instantiation should be done with inversify container
+  const db = await new Database(uri).getDb();
   const teamsService = new TeamService(db);
   const matchService = new MatchService(db);
 
@@ -32,4 +32,4 @@ function start(): void {
   app.listen(3000, () => console.log('Server listen on port 3000'));
 }
 
-start();
+void start();
