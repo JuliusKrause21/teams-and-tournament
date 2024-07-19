@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient } from 'mongodb';
+import { TeamService } from './services/TeamService';
+import { MatchService } from './services/MatchService';
 
 function start(): void {
   console.log('Hello World');
@@ -9,29 +11,17 @@ function start(): void {
 
   const app = express();
 
-  class Team {
-    constructor(
-      public _id: ObjectId,
-      public name: string
-    ) {}
-  }
-
-  class Match {
-    constructor(
-      public _id: ObjectId,
-      public date: number
-    ) {}
-  }
-
   const db = client.db('test');
+  const teamsService = new TeamService(db);
+  const matchService = new MatchService(db);
 
   app.get('/teams', async (_req: Request, res: Response) => {
-    const teams = await db.collection<Team>('teams').find().toArray();
+    const teams = await teamsService.listTeams();
     res.status(200).json(teams);
   });
 
   app.get('/matches', async (_req: Request, res: Response) => {
-    const matches = await db.collection<Match>('matches').find().toArray();
+    const matches = await matchService.listMatches();
     res.status(200).json(matches);
   });
 
