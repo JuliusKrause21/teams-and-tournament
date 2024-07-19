@@ -1,9 +1,12 @@
-import { Db, WithId } from 'mongodb';
+import { WithId } from 'mongodb';
 import { TeamEntity } from './entities/TeamEntity';
+import { inject, injectable } from 'inversify';
+import { Database } from '../Database';
 
+@injectable()
 export class TeamRepository {
-  constructor(private readonly db: Db) {
-    this.teamsCollection = this.db.collection<TeamEntity>('teams');
+  constructor(@inject(Database) private readonly db: Database) {
+    this.teamsCollection = this.db.getCollection<TeamEntity>('teams');
   }
 
   private teamsCollection;

@@ -1,15 +1,11 @@
-import { Db, WithId } from 'mongodb';
+import { WithId } from 'mongodb';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { TeamRepository } from '../repositories/TeamRepository';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class TeamService {
-  constructor(private readonly db: Db) {
-    // This is the chain of calls where the db needs to passed from top level down to the repository
-    // Use DI here with inversify to inject the repository to the service, the db to the repository ....
-    this.teamRepository = new TeamRepository(this.db);
-  }
-
-  private teamRepository: TeamRepository;
+  constructor(@inject(TeamRepository) private readonly teamRepository: TeamRepository) {}
 
   public async listTeams(): Promise<WithId<TeamEntity>[]> {
     /*

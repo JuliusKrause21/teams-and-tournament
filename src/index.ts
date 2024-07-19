@@ -17,8 +17,8 @@ async function start(): Promise<void> {
   await db.connect(uri);
 
   // Instantiation should be done with inversify container of services
-  const teamsService = new TeamService(db.getDb());
-  const matchService = new MatchService(db.getDb());
+  const teamsService = container.get(TeamService);
+  const matchService = container.get(MatchService);
 
   app.get('/teams', async (_req: Request, res: Response) => {
     const teams = await teamsService.listTeams();

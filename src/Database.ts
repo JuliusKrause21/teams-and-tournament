@@ -1,4 +1,4 @@
-import { Db, MongoClient } from 'mongodb';
+import { Collection, Db, Document, MongoClient } from 'mongodb';
 import { injectable } from 'inversify';
 
 @injectable()
@@ -20,5 +20,12 @@ export class Database {
       throw new Error('Trying to access DB before establishing connection');
     }
     return this.mongoClient.db();
+  }
+
+  public getCollection<T extends Document>(collection: string): Collection<T> {
+    if (this.mongoClient === undefined) {
+      throw new Error('Trying to access DB before establishing connection');
+    }
+    return this.mongoClient.db().collection<T>(collection);
   }
 }
