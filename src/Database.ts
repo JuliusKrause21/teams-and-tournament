@@ -1,7 +1,8 @@
 import { Db, MongoClient } from 'mongodb';
+import { injectable } from 'inversify';
 
+@injectable()
 export class Database {
-  constructor(private readonly uri: string) {}
   private mongoClient: MongoClient | undefined;
 
   public async connect(uri: string): Promise<void> {
@@ -14,8 +15,7 @@ export class Database {
     console.log('Database connection established');
   }
 
-  public async getDb(): Promise<Db> {
-    await this.connect(this.uri);
+  public getDb(): Db {
     if (this.mongoClient === undefined) {
       throw new Error('Trying to access DB before establishing connection');
     }

@@ -1,7 +1,10 @@
+import 'reflect-metadata';
+
 import express, { Request, Response } from 'express';
 import { TeamService } from './services/TeamService';
 import { MatchService } from './services/MatchService';
 import { Database } from './Database';
+import { container } from './inversify.config';
 
 async function start(): Promise<void> {
   console.log('Hello World');
@@ -10,10 +13,12 @@ async function start(): Promise<void> {
 
   const app = express();
 
-  // Instantiation should be done with inversify container
-  const db = await new Database(uri).getDb();
-  const teamsService = new TeamService(db);
-  const matchService = new MatchService(db);
+  const db = container.get(Database);
+  await db.connect(uri);
+
+  // Instantiation should be done with inversify container of services
+  const teamsService = new TeamService(db.getDb());
+  const matchService = new MatchService(db.getDb());
 
   app.get('/teams', async (_req: Request, res: Response) => {
     const teams = await teamsService.listTeams();
