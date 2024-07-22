@@ -3,8 +3,8 @@ import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import { Database } from './Database';
 import { container } from './inversify.config';
-import { TeamsController } from './controllers/TeamsController';
-import { MatchesController } from './controllers/MatchesController';
+import { TeamsRoute } from './routes/TeamsRoute';
+import { MatchesRoute } from './routes/MatchesRoute';
 
 async function start(): Promise<void> {
   console.log('Hello World');
@@ -17,18 +17,11 @@ async function start(): Promise<void> {
   await db.connect(uri);
 
   // Instantiation should be done with inversify container of services
-  const teamsController = container.get(TeamsController);
-  const matchesController = container.get(MatchesController);
+  const teamsRoute = container.get(TeamsRoute);
+  const matchesRoute = container.get(MatchesRoute);
 
-  app.get('/teams', async (_req: Request, res: Response) => {
-    const teams = await teamsController.listTeams();
-    res.status(200).json(teams);
-  });
-
-  app.get('/matches', async (_req: Request, res: Response) => {
-    const matches = await matchesController.listMatches();
-    res.status(200).json(matches);
-  });
+  app.use('/teams', teamsRoute.registerRoutes());
+  app.use('/matches', matchesRoute.registerRoutes());
 
   app.get('/', (_req: Request, res: Response) => {
     res.status(200).send('Hello world\n');

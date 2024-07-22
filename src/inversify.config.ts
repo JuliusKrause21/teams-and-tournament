@@ -6,6 +6,8 @@ import { TeamRepository } from './repositories/TeamRepository';
 import { MatchRepository } from './repositories/entities/MatchRepository';
 import { TeamsController } from './controllers/TeamsController';
 import { MatchesController } from './controllers/MatchesController';
+import { TeamsRoute } from './routes/TeamsRoute';
+import { MatchesRoute } from './routes/MatchesRoute';
 
 export const container = new Container();
 
@@ -23,3 +25,7 @@ container.bind<MatchesService>(MatchesService).toSelf().inSingletonScope();
 // controllers
 container.bind<TeamsController>(TeamsController).toSelf().inSingletonScope();
 container.bind<MatchesController>(MatchesController).toSelf().inSingletonScope();
+
+// routes
+container.bind<TeamsRoute>(TeamsRoute).toSelf();
+container.bind<MatchesRoute>(MatchesRoute).toSelf();
