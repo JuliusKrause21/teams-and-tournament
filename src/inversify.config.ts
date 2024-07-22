@@ -9,8 +9,12 @@ import { MatchesController } from './controllers/MatchesController';
 import { TeamsRoute } from './routes/TeamsRoute';
 import { MatchesRoute } from './routes/MatchesRoute';
 import { Server } from './Server';
+import { Application } from './Application';
 
 export const container = new Container();
+
+// application
+container.bind<Application>(Application).toSelf();
 
 // db
 container.bind<Database>(Database).toSelf().inSingletonScope();
