@@ -8,7 +8,11 @@ export class MatchesController {
   constructor(@inject(MatchesService) private readonly matchesService: MatchesService) {}
 
   public async listMatches(): Promise<ApiResponse<Matches[]>> {
-    const matches = await this.matchesService.listMatches();
-    return { statusCode: 200, body: matches };
+    try {
+      const matches = await this.matchesService.listMatches();
+      return { statusCode: 200, body: matches };
+    } catch (error) {
+      return { statusCode: 500 };
+    }
   }
 }

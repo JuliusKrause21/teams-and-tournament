@@ -19,7 +19,11 @@ export class Application {
     Getting the container of the Application in index.ts does not work since the database connection is tried to
     establish too soon and everytime an instance of the Application is injected
      */
-    application.startExpressServer();
+    try {
+      application.startExpressServer();
+    } catch (error) {
+      console.log('Failed to start express server');
+    }
   }
 
   private startExpressServer() {

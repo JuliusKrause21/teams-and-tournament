@@ -9,6 +9,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "resolveJsonModule": true
   }
 }

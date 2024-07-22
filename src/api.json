@@ -1,0 +1,106 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Teams and Tournament",
+    "description": "API for handling teams and tournament administration",
+    "version": "0.0.1"
+  },
+  "tags": [{ "name": "Teams" }, { "name": "Matches" }],
+  "servers": [],
+  "paths": {
+    "/teams": {
+      "get": {
+        "summary": "Get all teams",
+        "tags": ["Teams"],
+        "responses": {
+          "200": {
+            "description": "List of teams, empty array if no teams exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/team"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Teams"
+        ],
+        "summary": "Create a new team",
+        "requestBody": {
+          "description": "Team to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/team"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Team was successfully created"
+          }
+        }
+      }
+    },
+    "/matches": {
+      "get": {
+        "summary": "Get all matches",
+        "tags": ["Matches"],
+        "responses": {
+          "200": {
+            "description": "List of Matches, empty array if no teams exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/match"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "team": {
+        "type": "object",
+        "description": "Team",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "match": {
+        "type": "object",
+        "description": "Match",
+        "properties": {
+          "date": {
+            "type": "number"
+          }
+        },
+        "required": ["date"]
+      }
+    }
+  }
+}

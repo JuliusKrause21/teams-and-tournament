@@ -14,4 +14,8 @@ export class TeamService {
      */
     return this.teamRepository.findAll();
   }
+
+  public async createTeam(teamEntity: TeamEntity): Promise<void> {
+    await this.teamRepository.insert(teamEntity);
+  }
 }

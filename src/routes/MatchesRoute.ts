@@ -7,7 +7,7 @@ export class MatchesRoute {
   constructor(@inject(MatchesController) private readonly matchesController: MatchesController) {}
   public registerRoutes() {
     const matchesRouter = Router();
-    matchesRouter.get('', async (_req: Request, res: Response) => {
+    matchesRouter.get('/', async (_req: Request, res: Response) => {
       const { statusCode, body } = await this.matchesController.listMatches();
       res.status(statusCode).json(body);
     });

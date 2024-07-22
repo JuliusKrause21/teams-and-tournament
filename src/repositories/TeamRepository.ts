@@ -14,4 +14,8 @@ export class TeamRepository {
   public findAll(): Promise<WithId<TeamEntity>[]> {
     return this.teamsCollection.find().toArray();
   }
+
+  public async insert(teamEntity: TeamEntity) {
+    await this.teamsCollection.insertOne(teamEntity);
+  }
 }

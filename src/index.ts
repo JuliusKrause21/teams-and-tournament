@@ -4,7 +4,11 @@ import { container } from './inversify.config';
 
 async function start(): Promise<void> {
   console.log('Hello World');
-  await Application.startup(container);
+  try {
+    await Application.startup(container);
+  } catch (error) {
+    console.error('Uncaught exception', {}, error);
+  }
 }
 
 void start();
