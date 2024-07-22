@@ -4,7 +4,7 @@ import { MatchRepository } from '../repositories/entities/MatchRepository';
 import { inject, injectable } from 'inversify';
 
 @injectable()
-export class MatchService {
+export class MatchesService {
   constructor(@inject(MatchRepository) private readonly matchRepository: MatchRepository) {}
 
   public listMatches(): Promise<WithId<MatchEntity>[]> {

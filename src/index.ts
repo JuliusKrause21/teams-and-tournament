@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 
 import express, { Request, Response } from 'express';
-import { TeamService } from './services/TeamService';
-import { MatchService } from './services/MatchService';
 import { Database } from './Database';
 import { container } from './inversify.config';
+import { TeamsController } from './controllers/TeamsController';
+import { MatchesController } from './controllers/MatchesController';
 
 async function start(): Promise<void> {
   console.log('Hello World');
@@ -17,16 +17,16 @@ async function start(): Promise<void> {
   await db.connect(uri);
 
   // Instantiation should be done with inversify container of services
-  const teamsService = container.get(TeamService);
-  const matchService = container.get(MatchService);
+  const teamsController = container.get(TeamsController);
+  const matchesController = container.get(MatchesController);
 
   app.get('/teams', async (_req: Request, res: Response) => {
-    const teams = await teamsService.listTeams();
+    const teams = await teamsController.listTeams();
     res.status(200).json(teams);
   });
 
   app.get('/matches', async (_req: Request, res: Response) => {
-    const matches = await matchService.listMatches();
+    const matches = await matchesController.listMatches();
     res.status(200).json(matches);
   });
 
