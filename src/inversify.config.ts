@@ -8,11 +8,15 @@ import { TeamsController } from './controllers/TeamsController';
 import { MatchesController } from './controllers/MatchesController';
 import { TeamsRoute } from './routes/TeamsRoute';
 import { MatchesRoute } from './routes/MatchesRoute';
+import { Server } from './Server';
 
 export const container = new Container();
 
 // db
 container.bind<Database>(Database).toSelf().inSingletonScope();
+
+// server
+container.bind<Server>(Server).toSelf().inSingletonScope();
 
 // repositories
 container.bind<TeamRepository>(TeamRepository).toSelf().inSingletonScope();
