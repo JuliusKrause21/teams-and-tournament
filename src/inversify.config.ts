@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Container } from 'inversify';
 import { Database } from './Database';
 import { TeamService } from './services/TeamService';
