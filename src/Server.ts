@@ -37,7 +37,7 @@ export class Server {
     //   next(error);
     // });
 
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    app.use((err: any, _req: Request, res: Response) => {
       res.status(err.status || 500).json({
         message: err.message,
         errors: err.errors,
