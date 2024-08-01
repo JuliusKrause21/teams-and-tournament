@@ -12,7 +12,7 @@ export class Application {
     await db.connect(uri);
 
     // This can be moved to a separate file
-    await db.getCollection('teams').createIndex('name', { name: 'name_1', unique: true });
+    // await db.getCollection('teams').createIndex('name', { name: 'name_1', unique: true });
 
     const application = container.get(Application);
 

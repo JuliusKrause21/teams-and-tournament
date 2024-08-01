@@ -5,12 +5,14 @@ import express, { ErrorRequestHandler, NextFunction, Request, Response } from 'e
 import { middleware } from 'express-openapi-validator';
 import bodyParser from 'body-parser';
 import path from 'node:path';
+import { TasksRoute } from './routes/TasksRoute';
 
 @injectable()
 export class Server {
   constructor(
     @inject(TeamsRoute) private teamsRoute: TeamsRoute,
-    @inject(MatchesRoute) private readonly matchesRoute: MatchesRoute
+    @inject(MatchesRoute) private readonly matchesRoute: MatchesRoute,
+    @inject(TasksRoute) private readonly tasksRoute: TasksRoute
   ) {}
 
   public start() {
@@ -19,7 +21,9 @@ export class Server {
 
     app.use(bodyParser.json());
 
-    app.use(middleware({ apiSpec: path.join(__dirname, './api.json'), validateRequests: true }));
+    app.use(
+      middleware({ apiSpec: path.join(__dirname, './api.json'), validateRequests: true, validateResponses: true })
+    );
 
     app.use((req: Request, _res: Response, next: NextFunction) => {
       const date = Date.now().toString();
@@ -29,6 +33,7 @@ export class Server {
 
     app.use('/teams', this.teamsRoute.registerRoutes());
     app.use('/matches', this.matchesRoute.registerRoutes());
+    app.use('/tasks', this.tasksRoute.registerRoutes());
 
     app.use((err: ErrorRequestHandler, _req: Request, res: Response, _next: NextFunction) => {
       console.log('Custom error handler');
