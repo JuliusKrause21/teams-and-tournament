@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { TeamsRoute } from './routes/TeamsRoute';
 import { MatchesRoute } from './routes/MatchesRoute';
-import express, { NextFunction, Request, Response } from 'express';
+import express, { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { middleware } from 'express-openapi-validator';
 import bodyParser from 'body-parser';
 import path from 'node:path';
@@ -18,7 +18,6 @@ export class Server {
     const app = express();
 
     app.use(bodyParser.json());
-    app.use(bodyParser.json());
 
     app.use(middleware({ apiSpec: path.join(__dirname, './api.json'), validateRequests: true }));
 
@@ -31,16 +30,10 @@ export class Server {
     app.use('/teams', this.teamsRoute.registerRoutes());
     app.use('/matches', this.matchesRoute.registerRoutes());
 
-    // app.use((_req: Request, _res: Response, next: NextFunction) => {
-    //   const error: any = new Error('Bad Request');
-    //   error.status = 400;
-    //   next(error);
-    // });
-
-    app.use((err: any, _req: Request, res: Response) => {
-      res.status(err.status || 500).json({
-        message: err.message,
-        errors: err.errors,
+    app.use((err: ErrorRequestHandler, _req: Request, res: Response, _next: NextFunction) => {
+      console.log('Custom error handler');
+      res.status(500).json({
+        err,
       });
     });
 
