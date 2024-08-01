@@ -1,7 +1,7 @@
 import { WithId } from 'mongodb';
-import { MatchEntity } from './MatchEntity';
+import { MatchEntity } from './entities/MatchEntity';
 import { inject, injectable } from 'inversify';
-import { Database } from '../../Database';
+import { Database } from '../Database';
 
 @injectable()
 export class MatchRepository {

@@ -4,7 +4,7 @@ import { Database } from './Database';
 import { TeamService } from './services/TeamService';
 import { MatchesService } from './services/MatchesService';
 import { TeamRepository } from './repositories/TeamRepository';
-import { MatchRepository } from './repositories/entities/MatchRepository';
+import { MatchRepository } from './repositories/MatchRepository';
 import { TeamsController } from './controllers/TeamsController';
 import { MatchesController } from './controllers/MatchesController';
 import { TeamsRoute } from './routes/TeamsRoute';
