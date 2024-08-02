@@ -1,14 +1,14 @@
 import { inject, injectable } from 'inversify';
 import { ApiResponse } from '../models/ApiResponse';
 import { TasksService } from '../services/TasksService';
-import { Task } from '../models/Task';
+import { Task, TaskQueryOptions } from '../models/Task';
 
 @injectable()
 export class TasksController {
   constructor(@inject(TasksService) private readonly tasksService: TasksService) {}
-  public async listTasks(): Promise<ApiResponse<Task[]>> {
+  public async listTasks(query: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     try {
-      const tasks = await this.tasksService.listTasks();
+      const tasks = await this.tasksService.listTasks(query);
       return { statusCode: 200, body: tasks };
     } catch (error) {
       return { statusCode: 500 };

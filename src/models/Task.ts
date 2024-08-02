@@ -9,3 +9,5 @@ export interface Task {
   assignedPlayers: string[];
   numberOfNeeds: number;
 }
+
+export type TaskQueryOptions = Pick<Task, 'dueDate'>;

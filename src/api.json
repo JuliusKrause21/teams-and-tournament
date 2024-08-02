@@ -82,6 +82,17 @@
       "get": {
         "summary": "Get all tasks",
         "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dueDate",
+            "description": "Due date of a task to filter for.",
+            "schema": {
+              "type": "string"
+            },
+            "allowReserved": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of Tasks, empty array if no teams exist",
