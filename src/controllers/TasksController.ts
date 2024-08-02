@@ -2,7 +2,6 @@ import { inject, injectable } from 'inversify';
 import { ApiResponse } from '../models/ApiResponse';
 import { TasksService } from '../services/TasksService';
 import { Task } from '../models/Task';
-import { TaskEntity } from '../repositories/entities/TaskEntity';
 
 @injectable()
 export class TasksController {
@@ -16,9 +15,9 @@ export class TasksController {
     }
   }
 
-  public async createTask(taskEntity: TaskEntity): Promise<ApiResponse<undefined>> {
+  public async createTask(task: Task): Promise<ApiResponse<undefined>> {
     try {
-      await this.tasksService.createTask(taskEntity);
+      await this.tasksService.createTask(task);
       return { statusCode: 201 };
     } catch (error) {
       return { statusCode: 500 };

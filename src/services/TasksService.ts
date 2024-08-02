@@ -21,7 +21,13 @@ export class TasksService {
     }));
   }
 
-  public async createTask(taskEntity: TaskEntity): Promise<void> {
+  public async createTask(task: Task): Promise<void> {
+    const taskEntity = new TaskEntity({
+      type: task.type,
+      number_of_needs: task.numberOfNeeds,
+      assigned: task.assignedPlayers,
+      due_date: task.dueDate,
+    });
     await this.taskRepository.insert(taskEntity);
   }
 }

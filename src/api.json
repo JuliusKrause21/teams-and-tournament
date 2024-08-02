@@ -100,9 +100,30 @@
             "description": "Unable to perform the operation"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Create a new task",
+        "requestBody": {
+          "description": "Task to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/task"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task was successfully created"
+          }
+        }
       }
     }
-
   },
   "components": {
     "schemas": {
