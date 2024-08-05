@@ -17,8 +17,7 @@ export class TasksController {
 
   public async getTask(taskId: string): Promise<ApiResponse<Task>> {
     try {
-      const { statusCode, body } = await this.tasksService.getTask(taskId);
-      return { statusCode, body };
+      return this.tasksService.getTask(taskId);
     } catch (error) {
       return { statusCode: 500 };
     }
@@ -26,9 +25,18 @@ export class TasksController {
 
   public async createTask(task: Task): Promise<ApiResponse<undefined>> {
     try {
-      await this.tasksService.createTask(task);
-      return { statusCode: 201 };
+      return this.tasksService.createTask(task);
     } catch (error) {
+      return { statusCode: 500 };
+    }
+  }
+
+  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<undefined>> {
+    try {
+      const { statusCode } = await this.tasksService.updateTask(taskId, task);
+      return { statusCode };
+    } catch (error) {
+      // Here the error is lost, it should not be presented to the user but it should be logged.
       return { statusCode: 500 };
     }
   }

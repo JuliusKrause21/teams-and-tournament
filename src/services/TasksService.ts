@@ -26,9 +26,25 @@ export class TasksService {
     return { statusCode: 200, body: this.mapTaskEntityToTask(taskEntity) };
   }
 
-  public async createTask(task: Task): Promise<void> {
+  public async createTask(task: Task): Promise<ApiResponse<undefined>> {
     const taskEntity = new TaskEntity(this.mapTaskToTaskEntity(task));
-    await this.taskRepository.insert(taskEntity);
+    const insertResult = await this.taskRepository.insert(taskEntity);
+    if (!insertResult.acknowledged) {
+      return { statusCode: 500 };
+    }
+    return { statusCode: 201 };
+  }
+
+  public async updateTask(taskId: string, update: Task): Promise<ApiResponse<undefined>> {
+    console.log(`Update task with id ${taskId}`);
+    const updateResult = await this.taskRepository.updateOne(taskId, this.mapTaskToTaskEntity(update));
+    if (!updateResult.acknowledged) {
+      return { statusCode: 500 };
+    }
+    if (updateResult.matchedCount === 0) {
+      return { statusCode: 404 };
+    }
+    return { statusCode: 200 };
   }
 
   private mapQueryToEntityQuery(taskQuery?: TaskQueryOptions): Partial<TaskEntity> | undefined {
