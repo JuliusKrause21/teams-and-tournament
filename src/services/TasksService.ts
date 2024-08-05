@@ -7,13 +7,13 @@ import { Task, TaskQueryOptions } from '../models/Task';
 export class TasksService {
   constructor(@inject(TaskRepository) private readonly taskRepository: TaskRepository) {}
 
-  public async listTasks(query: TaskQueryOptions): Promise<Task[]> {
+  public async listTasks(query?: TaskQueryOptions): Promise<Task[]> {
     /*
     This just returns the result of the repository call, but this is the place where the business logic is implemented
     Calls to several repositories, data combination and mapping takes place here.
      */
-    const entityQuery = this.mapQueryToEntityQuery(query);
-    const taskEntities = await this.taskRepository.findAll(entityQuery);
+    const taskEntities = await this.taskRepository.findAll(this.mapQueryToEntityQuery(query));
+    console.log(`Task entities: ${taskEntities}`);
     return taskEntities.map(this.mapTaskEntityToTask);
   }
 
@@ -22,7 +22,10 @@ export class TasksService {
     await this.taskRepository.insert(taskEntity);
   }
 
-  private mapQueryToEntityQuery(taskQuery: TaskQueryOptions): Partial<TaskEntity> {
+  private mapQueryToEntityQuery(taskQuery?: TaskQueryOptions): Partial<TaskEntity> | undefined {
+    if (!isTaskQueryOption(taskQuery)) {
+      return;
+    }
     return {
       due_date: taskQuery.dueDate,
     };

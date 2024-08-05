@@ -11,3 +11,7 @@ export interface Task {
 }
 
 export type TaskQueryOptions = Pick<Task, 'dueDate'>;
+
+export function isTaskQueryOption(query: unknown): query is TaskQueryOptions {
+  return typeof query === 'object' && (query as TaskQueryOptions).dueDate !== undefined;
+}

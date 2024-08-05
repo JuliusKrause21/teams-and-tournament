@@ -8,18 +8,20 @@ export class TasksRoute {
   constructor(@inject(TasksController) private readonly tasksController: TasksController) {}
   public registerRoutes() {
     const tasksRouter = Router();
+
     tasksRouter.get('/', async (req: Request, res: Response) => {
       console.log(`List tasks with query ${JSON.stringify(req.query)}`);
       const { dueDate } = req.query;
-      console.log(dueDate);
       const { statusCode, body } = await this.tasksController.listTasks({ dueDate } as TaskQueryOptions);
       res.status(statusCode).json(body);
     });
+
     tasksRouter.post('/', async (req: Request, res: Response) => {
       const { body } = req;
       const { statusCode } = await this.tasksController.createTask(body);
       res.status(statusCode).send();
     });
+
     return tasksRouter;
   }
 }

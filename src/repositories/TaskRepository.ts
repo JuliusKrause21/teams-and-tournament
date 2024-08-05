@@ -10,7 +10,7 @@ export class TaskRepository {
 
   private taskCollection;
 
-  public findAll(filter: Partial<TaskEntity>): Promise<TaskEntity[]> {
+  public findAll(filter: Filter<TaskEntity> = {}): Promise<TaskEntity[]> {
     console.log(`Filter task repository with query ${JSON.stringify(filter)}`);
     return this.taskCollection.find(filter, { projection: { _id: 0 } }).toArray();
   }

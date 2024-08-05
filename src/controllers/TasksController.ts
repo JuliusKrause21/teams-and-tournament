@@ -6,7 +6,7 @@ import { Task, TaskQueryOptions } from '../models/Task';
 @injectable()
 export class TasksController {
   constructor(@inject(TasksService) private readonly tasksService: TasksService) {}
-  public async listTasks(query: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
+  public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     try {
       const tasks = await this.tasksService.listTasks(query);
       return { statusCode: 200, body: tasks };
