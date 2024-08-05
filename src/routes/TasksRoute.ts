@@ -16,6 +16,13 @@ export class TasksRoute {
       res.status(statusCode).json(body);
     });
 
+    tasksRouter.get('/:id', async (req: Request, res: Response) => {
+      const { id } = req.params;
+      console.log(`Getting task with id ${id}`);
+      const { statusCode, body } = await this.tasksController.getTask(id);
+      res.status(statusCode).json(body);
+    });
+
     tasksRouter.post('/', async (req: Request, res: Response) => {
       const { body } = req;
       const { statusCode } = await this.tasksController.createTask(body);

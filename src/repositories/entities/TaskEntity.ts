@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { v4 as uuid } from 'uuid';
 import { TaskType } from '../../models/Task';
 
 export class TaskEntity {
@@ -8,23 +9,27 @@ export class TaskEntity {
   public assigned: string[];
   public number_of_needs: number;
   public last_modified?: string;
+  public task_id?: string;
   constructor({
     type,
     due_date,
     assigned = [],
-    number_of_needs,
+    number_of_needs = 1,
     last_modified = new Date().toISOString(),
+    task_id = uuid(),
   }: {
     type: TaskType;
     due_date: string;
-    assigned: string[];
-    number_of_needs: number;
+    assigned?: string[];
+    number_of_needs?: number;
     last_modified?: string;
+    task_id?: string;
   }) {
     this.type = type;
     this.due_date = due_date;
     this.assigned = assigned;
     this.number_of_needs = number_of_needs;
     this.last_modified = last_modified;
+    this.task_id = task_id;
   }
 }

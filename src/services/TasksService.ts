@@ -1,20 +1,29 @@
 import { inject, injectable } from 'inversify';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { TaskEntity } from '../repositories/entities/TaskEntity';
-import { Task, TaskQueryOptions } from '../models/Task';
+import { isTaskQueryOption, Task, TaskQueryOptions } from '../models/Task';
+import { ApiResponse } from '../models/ApiResponse';
 
 @injectable()
 export class TasksService {
   constructor(@inject(TaskRepository) private readonly taskRepository: TaskRepository) {}
 
-  public async listTasks(query?: TaskQueryOptions): Promise<Task[]> {
+  public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     /*
     This just returns the result of the repository call, but this is the place where the business logic is implemented
     Calls to several repositories, data combination and mapping takes place here.
      */
     const taskEntities = await this.taskRepository.findAll(this.mapQueryToEntityQuery(query));
     console.log(`Task entities: ${taskEntities}`);
-    return taskEntities.map(this.mapTaskEntityToTask);
+    return { statusCode: 200, body: taskEntities.map(this.mapTaskEntityToTask) };
+  }
+
+  public async getTask(taskId: string): Promise<ApiResponse<Task>> {
+    const taskEntity = await this.taskRepository.findByTaskId(taskId);
+    if (!taskEntity) {
+      return { statusCode: 404 };
+    }
+    return { statusCode: 200, body: this.mapTaskEntityToTask(taskEntity) };
   }
 
   public async createTask(task: Task): Promise<void> {

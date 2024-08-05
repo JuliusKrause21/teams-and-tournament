@@ -8,8 +8,17 @@ export class TasksController {
   constructor(@inject(TasksService) private readonly tasksService: TasksService) {}
   public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     try {
-      const tasks = await this.tasksService.listTasks(query);
-      return { statusCode: 200, body: tasks };
+      const { statusCode, body } = await this.tasksService.listTasks(query);
+      return { statusCode, body };
+    } catch (error) {
+      return { statusCode: 500 };
+    }
+  }
+
+  public async getTask(taskId: string): Promise<ApiResponse<Task>> {
+    try {
+      const { statusCode, body } = await this.tasksService.getTask(taskId);
+      return { statusCode, body };
     } catch (error) {
       return { statusCode: 500 };
     }
