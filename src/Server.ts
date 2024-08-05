@@ -1,11 +1,13 @@
 import { inject, injectable } from 'inversify';
 import { TeamsRoute } from './routes/TeamsRoute';
 import { MatchesRoute } from './routes/MatchesRoute';
-import express, { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { middleware } from 'express-openapi-validator';
 import bodyParser from 'body-parser';
 import path from 'node:path';
 import { TasksRoute } from './routes/TasksRoute';
+import { HttpError } from 'express-openapi-validator/dist/framework/types';
+import { isOpenApiError } from './models/OpenApiError';
 
 @injectable()
 export class Server {
@@ -35,11 +37,16 @@ export class Server {
     app.use('/matches', this.matchesRoute.registerRoutes());
     app.use('/tasks', this.tasksRoute.registerRoutes());
 
-    app.use((err: ErrorRequestHandler, _req: Request, res: Response, _next: NextFunction) => {
+    app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
       console.log('Custom error handler');
-      res.status(500).json({
-        err,
-      });
+      if (isOpenApiError(err)) {
+        const { status, message } = err as HttpError;
+        res.status(status || 500).send(message);
+      } else {
+        res.status(500).json({
+          err,
+        });
+      }
     });
 
     app.listen(3000, () => console.log('Server listen on port 3000'));
