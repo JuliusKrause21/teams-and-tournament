@@ -1,8 +1,9 @@
-import { deepEqual, instance, mock, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { TasksService } from './TasksService';
-import { TaskType } from '../models/Task';
+import { Task, TaskType } from '../models/Task';
 import { TaskEntity } from '../repositories/entities/TaskEntity';
+import { ObjectId } from 'mongodb';
 
 describe('TasksService', () => {
   let taskRepository: TaskRepository;
@@ -54,6 +55,7 @@ describe('TasksService', () => {
       expect(result).toStrictEqual({ statusCode: 200, body: [] });
     });
   });
+
   describe('getTask', () => {
     const mockedUuid = 'c7e8f262-e26f-4176-b0b3-56562ad2b090';
 
@@ -68,6 +70,88 @@ describe('TasksService', () => {
       when(taskRepository.findByTaskId(mockedUuid)).thenResolve(null);
       const result = await tasksService.getTask(mockedUuid);
       expect(result.statusCode).toBe(404);
+    });
+  });
+
+  describe('createTask', () => {
+    const task: Task = {
+      type: TaskType.Simple,
+      dueDate: dueDateOne,
+      assignedPlayers: [],
+      numberOfNeeds: 2,
+    };
+
+    test('to create a task', async () => {
+      when(taskRepository.insert(anything())).thenResolve({
+        acknowledged: true,
+        insertedId: new ObjectId(),
+      });
+
+      const result = await tasksService.createTask(task);
+      expect(result.statusCode).toBe(201);
+    });
+
+    test('failed to acknowledge task creation', async () => {
+      when(taskRepository.insert(anything())).thenResolve({
+        acknowledged: false,
+        insertedId: new ObjectId(),
+      });
+
+      const result = await tasksService.createTask(task);
+      expect(result.statusCode).toBe(500);
+    });
+  });
+
+  describe('updateTask', () => {
+    const mockedUuid = 'c7e8f262-e26f-4176-b0b3-56562ad2b090';
+    const assignedPlayers = ['Julius'];
+    const task: Task = {
+      type: TaskType.Simple,
+      dueDate: dueDateOne,
+      assignedPlayers: [],
+      numberOfNeeds: 2,
+    };
+    test('to update task', async () => {
+      const updatedEntity: TaskEntity = {
+        type: TaskType.Simple,
+        due_date: dueDateOne,
+        assigned: assignedPlayers,
+        number_of_needs: 2,
+      };
+      when(taskRepository.updateOne(mockedUuid, deepEqual(updatedEntity))).thenResolve({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
+        upsertedId: null,
+        upsertedCount: 0,
+      });
+      const result = await tasksService.updateTask(mockedUuid, { ...task, assignedPlayers });
+      expect(result.statusCode).toBe(200);
+    });
+
+    test('to return 404 if task id not found', async () => {
+      const nonExistingId = 'non-existing-id';
+      when(taskRepository.updateOne(nonExistingId, anything())).thenResolve({
+        acknowledged: true,
+        matchedCount: 0,
+        modifiedCount: 0,
+        upsertedId: null,
+        upsertedCount: 0,
+      });
+      const result = await tasksService.updateTask(nonExistingId, { ...task, assignedPlayers });
+      expect(result.statusCode).toBe(404);
+    });
+
+    test('to return 500 if update acknowledgement fails', async () => {
+      when(taskRepository.updateOne(mockedUuid, anything())).thenResolve({
+        acknowledged: false,
+        matchedCount: 0,
+        modifiedCount: 0,
+        upsertedId: null,
+        upsertedCount: 0,
+      });
+      const result = await tasksService.updateTask(mockedUuid, { ...task, assignedPlayers });
+      expect(result.statusCode).toBe(500);
     });
   });
 });

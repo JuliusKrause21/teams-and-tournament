@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
 import { TaskEntity } from './entities/TaskEntity';
-import { Filter } from 'mongodb';
+import { Filter, InsertOneResult, UpdateFilter, UpdateResult } from 'mongodb';
 
 @injectable()
 export class TaskRepository {
@@ -16,12 +16,16 @@ export class TaskRepository {
     return this.taskCollection.find(filter, { projection: { _id: 0 } }).toArray();
   }
 
-  public findByTaskId(taskId: string): Promise<TaskEntity | null> {
-    console.log(`Get task entity with id ${taskId}`);
-    return this.taskCollection.findOne({ task_id: taskId }, { projection: { _id: 0 } });
+  public findByTaskId(task_id: string): Promise<TaskEntity | null> {
+    console.log(`Get task entity with id ${task_id}`);
+    return this.taskCollection.findOne({ task_id }, { projection: { _id: 0 } });
   }
 
-  public async insert(taskEntity: TaskEntity) {
-    await this.taskCollection.insertOne(taskEntity);
+  public async insert(taskEntity: TaskEntity): Promise<InsertOneResult<TaskEntity>> {
+    return this.taskCollection.insertOne(taskEntity);
+  }
+
+  public async updateOne(task_id: string, updateFields: UpdateFilter<TaskEntity>): Promise<UpdateResult<TaskEntity>> {
+    return this.taskCollection.updateOne({ task_id }, { $set: updateFields });
   }
 }

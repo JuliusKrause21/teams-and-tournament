@@ -29,6 +29,13 @@ export class TasksRoute {
       res.status(statusCode).send();
     });
 
+    tasksRouter.put('/:id', async (req: Request, res: Response) => {
+      const { id } = req.params;
+      console.log(`Update task with id ${id}`);
+      const { statusCode } = await this.tasksController.updateTask(id, req.body);
+      res.status(statusCode).send();
+    });
+
     return tasksRouter;
   }
 }

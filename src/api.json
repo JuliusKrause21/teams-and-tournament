@@ -134,10 +134,85 @@
           }
         }
       }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "summary": "Get task with specific task id",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/uuid"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task with requested id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/task"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update task with specific task id",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/uuid"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "Task to update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/task"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task successfully updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "uuid": {
+        "type": "string",
+        "description": "UUID version 4 depending on the usage",
+        "example": "02d3f7b1-1c45-467f-ace6-d0eb41f477ee"
+      },
       "team": {
         "type": "object",
         "description": "Team",
@@ -179,9 +254,9 @@
             "type": "number"
           }
         },
-        "required": ["type", "dueDate", "assignedPlayers", "numberOfNeeds"]
+        "required": ["type", "dueDate", "assignedPlayers", "numberOfNeeds"],
+        "additionalProperties": false
       }
-
     }
   }
 }
