@@ -1,4 +1,4 @@
-import { WithId } from 'mongodb';
+import { InsertManyResult, WithId } from 'mongodb';
 import { MatchEntity } from './entities/MatchEntity';
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
@@ -13,5 +13,9 @@ export class MatchRepository {
 
   public async findAll(): Promise<WithId<MatchEntity>[]> {
     return this.matchCollection.find().toArray();
+  }
+
+  public async bulkInsert(matchEntities: MatchEntity[]): Promise<InsertManyResult<MatchEntity>> {
+    return this.matchCollection.insertMany(matchEntities);
   }
 }
