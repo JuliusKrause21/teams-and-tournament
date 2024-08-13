@@ -4,10 +4,14 @@ import { TaskEntity } from '../repositories/entities/TaskEntity';
 import { isTaskQueryOption, Task, TaskQueryOptions } from '../models/Task';
 import { ApiResponse } from '../models/ApiResponse';
 import { games } from '../dummyData';
+import { NuLigaFacade } from '../facades/NuLigaFacade';
 
 @injectable()
 export class TasksService {
-  constructor(@inject(TaskRepository) private readonly taskRepository: TaskRepository) {}
+  constructor(
+    @inject(TaskRepository) private readonly taskRepository: TaskRepository,
+    @inject(NuLigaFacade) private readonly nuligaFacade: NuLigaFacade
+  ) {}
 
   public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     /*
@@ -44,6 +48,8 @@ export class TasksService {
   }
 
   public async assignRandomly(taskId: string): Promise<ApiResponse<Task | undefined>> {
+    await this.nuligaFacade.fetchStuff();
+
     console.log(`Randomly assign player to task with id ${taskId}`);
     const taskEntity = await this.taskRepository.findByTaskId(taskId);
     if (!taskEntity) {
@@ -51,6 +57,7 @@ export class TasksService {
     }
 
     const missingPlayers = taskEntity.number_of_needs - taskEntity.assigned.length;
+
     if (missingPlayers <= 0) {
       // TODO: Logging statement and correct error message
       return { statusCode: 200 };
