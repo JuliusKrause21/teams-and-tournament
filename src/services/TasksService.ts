@@ -3,6 +3,7 @@ import { TaskRepository } from '../repositories/TaskRepository';
 import { TaskEntity } from '../repositories/entities/TaskEntity';
 import { isTaskQueryOption, Task, TaskQueryOptions } from '../models/Task';
 import { ApiResponse } from '../models/ApiResponse';
+import { games } from '../dummyData';
 
 @injectable()
 export class TasksService {
@@ -28,6 +29,7 @@ export class TasksService {
 
   public async createTask(task: Task): Promise<ApiResponse<undefined>> {
     const taskEntity = new TaskEntity(this.mapTaskToTaskEntity(task));
+    taskEntity.resolved = taskEntity.assigned.length === taskEntity.number_of_needs;
     const insertResult = await this.taskRepository.insert(taskEntity);
     if (!insertResult.acknowledged) {
       return { statusCode: 500 };
@@ -35,9 +37,50 @@ export class TasksService {
     return { statusCode: 201 };
   }
 
-  public async updateTask(taskId: string, update: Task): Promise<ApiResponse<undefined>> {
+  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<undefined>> {
     console.log(`Update task with id ${taskId}`);
-    const updateResult = await this.taskRepository.updateOne(taskId, this.mapTaskToTaskEntity(update));
+    const taskEntity = this.mapTaskToTaskEntity(task);
+    return this.updateTaskEntity(taskId, taskEntity);
+  }
+
+  public async assignRandomPlayers(taskId: string): Promise<ApiResponse<undefined>> {
+    console.log(`Randomly assign player to task with id ${taskId}`);
+    const taskEntity = await this.taskRepository.findByTaskId(taskId);
+    if (!taskEntity) {
+      return { statusCode: 404 };
+    }
+
+    // TODO: Replace dummy data by call to games repository
+    const game = games.find((game) => game.date === taskEntity.due_date);
+    if (!game) {
+      return { statusCode: 404 };
+    }
+
+    let availablePlayers = game.availablePlayers.filter(
+      (availablePlayer) => !taskEntity.assigned.includes(availablePlayer)
+    );
+
+    const missingPlayers = taskEntity.number_of_needs - taskEntity.assigned.length;
+    if (missingPlayers < 0) {
+      // TODO: Logging statement and correct error message
+      return { statusCode: 500 };
+    }
+
+    while (taskEntity.resolved === false) {
+      const randomPlayer = availablePlayers[Math.floor(Math.random() * availablePlayers?.length)];
+      availablePlayers = availablePlayers.filter((availablePlayer) => availablePlayer !== randomPlayer);
+
+      taskEntity.assigned.push(randomPlayer);
+      taskEntity.resolved = taskEntity.number_of_needs === taskEntity.assigned.length;
+    }
+
+    console.table(taskEntity);
+    return this.updateTaskEntity(taskId, taskEntity);
+  }
+
+  private async updateTaskEntity(taskId: string, taskEntity: TaskEntity): Promise<ApiResponse<undefined>> {
+    taskEntity.resolved = taskEntity.assigned.length === taskEntity.number_of_needs;
+    const updateResult = await this.taskRepository.updateOne(taskId, taskEntity);
     if (!updateResult.acknowledged) {
       return { statusCode: 500 };
     }
@@ -59,6 +102,7 @@ export class TasksService {
   private mapTaskToTaskEntity(task: Task): TaskEntity {
     return {
       type: task.type,
+      description: task.description,
       number_of_needs: task.numberOfNeeds,
       assigned: task.assignedPlayers,
       due_date: task.dueDate,
@@ -68,6 +112,7 @@ export class TasksService {
   private mapTaskEntityToTask(taskEntity: TaskEntity): Task {
     return {
       type: taskEntity.type,
+      description: taskEntity.description,
       assignedPlayers: taskEntity.assigned,
       dueDate: taskEntity.due_date,
       numberOfNeeds: taskEntity.number_of_needs,
