@@ -204,6 +204,33 @@
           }
         }
       }
+    },
+    "/tasks/{id}/assign": {
+      "put": {
+        "summary": "Assign random assignee to task with id",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/uuid"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task successfully updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
     }
   },
   "components": {

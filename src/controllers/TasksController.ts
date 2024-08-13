@@ -40,4 +40,14 @@ export class TasksController {
       return { statusCode: 500 };
     }
   }
+
+  public async assignRandomly(taskId: string): Promise<ApiResponse<undefined>> {
+    try {
+      const { statusCode } = await this.tasksService.assignRandomly(taskId);
+      return { statusCode };
+    } catch (error) {
+      // Here the error is lost, it should not be presented to the user but it should be logged.
+      return { statusCode: 500 };
+    }
+  }
 }

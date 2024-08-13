@@ -43,14 +43,20 @@ export class TasksService {
     return this.updateTaskEntity(taskId, taskEntity);
   }
 
-  public async assignRandomPlayers(taskId: string): Promise<ApiResponse<undefined>> {
+  public async assignRandomly(taskId: string): Promise<ApiResponse<undefined>> {
     console.log(`Randomly assign player to task with id ${taskId}`);
     const taskEntity = await this.taskRepository.findByTaskId(taskId);
     if (!taskEntity) {
       return { statusCode: 404 };
     }
 
-    // TODO: Replace dummy data by call to games repository
+    const missingPlayers = taskEntity.number_of_needs - taskEntity.assigned.length;
+    if (missingPlayers <= 0) {
+      // TODO: Logging statement and correct error message
+      return { statusCode: 200 };
+    }
+
+    // TODO: Replace dummy data by call to games repository and extend unit test
     const game = games.find((game) => game.date === taskEntity.due_date);
     if (!game) {
       return { statusCode: 404 };
@@ -59,10 +65,8 @@ export class TasksService {
     let availablePlayers = game.availablePlayers.filter(
       (availablePlayer) => !taskEntity.assigned.includes(availablePlayer)
     );
-
-    const missingPlayers = taskEntity.number_of_needs - taskEntity.assigned.length;
-    if (missingPlayers < 0) {
-      // TODO: Logging statement and correct error message
+    if (availablePlayers.length === 0) {
+      // TODO: Logging statement and correct error message and extend unit test
       return { statusCode: 500 };
     }
 
