@@ -37,13 +37,13 @@ export class TasksService {
     return { statusCode: 201 };
   }
 
-  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<undefined>> {
+  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<Task | undefined>> {
     console.log(`Update task with id ${taskId}`);
     const taskEntity = this.mapTaskToTaskEntity(task);
     return this.updateTaskEntity(taskId, taskEntity);
   }
 
-  public async assignRandomly(taskId: string): Promise<ApiResponse<undefined>> {
+  public async assignRandomly(taskId: string): Promise<ApiResponse<Task | undefined>> {
     console.log(`Randomly assign player to task with id ${taskId}`);
     const taskEntity = await this.taskRepository.findByTaskId(taskId);
     if (!taskEntity) {
@@ -82,7 +82,7 @@ export class TasksService {
     return this.updateTaskEntity(taskId, taskEntity);
   }
 
-  private async updateTaskEntity(taskId: string, taskEntity: TaskEntity): Promise<ApiResponse<undefined>> {
+  private async updateTaskEntity(taskId: string, taskEntity: TaskEntity): Promise<ApiResponse<Task | undefined>> {
     taskEntity.resolved = taskEntity.assigned.length === taskEntity.number_of_needs;
     const updateResult = await this.taskRepository.updateOne(taskId, taskEntity);
     if (!updateResult.acknowledged) {
@@ -91,7 +91,7 @@ export class TasksService {
     if (updateResult.matchedCount === 0) {
       return { statusCode: 404 };
     }
-    return { statusCode: 200 };
+    return { statusCode: 200, body: this.mapTaskEntityToTask(taskEntity) };
   }
 
   private mapQueryToEntityQuery(taskQuery?: TaskQueryOptions): Partial<TaskEntity> | undefined {

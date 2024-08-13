@@ -32,15 +32,15 @@ export class TasksRoute {
     tasksRouter.put('/:id', async (req: Request, res: Response) => {
       const { id } = req.params;
       console.log(`Update task with id ${id}`);
-      const { statusCode } = await this.tasksController.updateTask(id, req.body);
-      res.status(statusCode).send();
+      const { statusCode, body } = await this.tasksController.updateTask(id, req.body);
+      res.status(statusCode).send(body);
     });
 
     tasksRouter.put('/:id/assign', async (req: Request, res: Response) => {
       const { id } = req.params;
       console.log(`Update task with id ${id}`);
-      const { statusCode } = await this.tasksController.assignRandomly(id);
-      res.status(statusCode).send();
+      const { statusCode, body } = await this.tasksController.assignRandomly(id);
+      res.status(statusCode).send(body);
     });
 
     return tasksRouter;

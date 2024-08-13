@@ -31,17 +31,17 @@ export class TasksController {
     }
   }
 
-  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<undefined>> {
+  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<Task | undefined>> {
     try {
-      const { statusCode } = await this.tasksService.updateTask(taskId, task);
-      return { statusCode };
+      const { statusCode, body } = await this.tasksService.updateTask(taskId, task);
+      return { statusCode, body };
     } catch (error) {
       // Here the error is lost, it should not be presented to the user but it should be logged.
       return { statusCode: 500 };
     }
   }
 
-  public async assignRandomly(taskId: string): Promise<ApiResponse<undefined>> {
+  public async assignRandomly(taskId: string): Promise<ApiResponse<Task | undefined>> {
     try {
       const { statusCode } = await this.tasksService.assignRandomly(taskId);
       return { statusCode };
