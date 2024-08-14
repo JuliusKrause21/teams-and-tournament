@@ -12,6 +12,12 @@ export class MatchesRoute {
       res.status(statusCode).json(body);
     });
 
+    matchesRouter.get('/:id', async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const { statusCode, body } = await this.matchesController.findMatch(id);
+      res.status(statusCode).json(body);
+    });
+
     matchesRouter.post('/import', async (_req: Request, res: Response) => {
       const { statusCode, body } = await this.matchesController.importMatches();
       res.status(statusCode).json(body);

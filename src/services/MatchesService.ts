@@ -14,8 +14,15 @@ export class MatchesService {
     @inject(NuLigaFacade) private readonly nuligaFacade: NuLigaFacade
   ) {}
 
-  public async listMatches(): Promise<WithId<MatchEntity>[]> {
-    return this.matchRepository.findAll();
+  public async listMatches(): Promise<ApiResponse<Match[]>> {
+    const matchEntities = await this.matchRepository.findAll();
+    return { statusCode: 200, body: matchEntities.map(this.mapMatchEntityToMatch) };
+  }
+
+  public async findMatch(matchId: string): Promise<Match> {
+    const matchEntity = await this.matchRepository.findById(matchId);
+    return this.mapMatchEntityToMatch(matchEntity);
+  }
   }
 
   public async importMatches(): Promise<ApiResponse<Match[]>> {
