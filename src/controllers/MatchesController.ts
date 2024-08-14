@@ -10,8 +10,8 @@ export class MatchesController {
 
   public async listMatches(): Promise<ApiResponse<Match[]>> {
     try {
-      const { statusCode, body } = await this.matchesService.listMatches();
-      return { statusCode, body };
+      const matches = await this.matchesService.listMatches();
+      return { statusCode: 500, body: matches };
     } catch (error) {
       return { statusCode: 500 };
     }
@@ -45,10 +45,10 @@ export class MatchesController {
     }
   }
 
-  public async importMatches(): Promise<ApiResponse<Match[]>> {
+  public async importMatches(): Promise<ApiResponse<void>> {
     try {
-      const { statusCode, body } = await this.matchesService.importMatches();
-      return { statusCode, body };
+      await this.matchesService.importMatches();
+      return { statusCode: 200 };
     } catch (error) {
       return { statusCode: 500 };
     }
