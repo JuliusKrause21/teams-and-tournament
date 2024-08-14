@@ -5,6 +5,10 @@ import { NuLigaFacade } from '../facades/NuLigaFacade';
 import { parse } from 'node-html-parser';
 import { Match } from '../models/Match';
 
+export enum MatchesServiceError {
+  FailedToParseHtml = 'Failed to parse html',
+}
+
 @injectable()
 export class MatchesService {
   constructor(
@@ -60,9 +64,9 @@ export class MatchesService {
 
   private parseHtmlPage(html: string): string[][] {
     const childNodes = parse(html).querySelector('#content-row2')?.querySelector('table')?.querySelectorAll('tr');
-    if (childNodes) {
-      console.error('Failed to parse html');
-      throw new Error('Failed to parse html');
+    if (!childNodes) {
+      console.error(MatchesServiceError.FailedToParseHtml);
+      throw new Error(MatchesServiceError.FailedToParseHtml);
     }
     const rows = [];
     for (const childNode of childNodes!) {

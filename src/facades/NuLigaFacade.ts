@@ -1,6 +1,10 @@
 import { injectable } from 'inversify';
 import fetch from 'node-fetch';
 
+export enum NuLigaFacadeError {
+  FailedDToFetch = 'Failed to fetch data from NuLiga',
+}
+
 @injectable()
 export class NuLigaFacade {
   public async fetchHtml(): Promise<string> {
@@ -10,7 +14,8 @@ export class NuLigaFacade {
       );
       return response.text();
     } catch (error) {
-      throw new Error('Failed to fetch data from NuLiga');
+      console.error(NuLigaFacadeError.FailedDToFetch);
+      throw new Error(NuLigaFacadeError.FailedDToFetch);
     }
   }
 }
