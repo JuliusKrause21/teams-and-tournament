@@ -18,6 +18,12 @@ export class MatchesRoute {
       res.status(statusCode).json(body);
     });
 
+    matchesRouter.put('/:id', async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const { statusCode, body } = await this.matchesController.updateMatch(id, req.body);
+      res.status(statusCode).json(body);
+    });
+
     matchesRouter.post('/import', async (_req: Request, res: Response) => {
       const { statusCode, body } = await this.matchesController.importMatches();
       res.status(statusCode).json(body);

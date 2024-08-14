@@ -1,11 +1,12 @@
-import { InsertManyResult, WithId } from 'mongodb';
+import { InsertManyResult, UpdateFilter } from 'mongodb';
 import { MatchEntity } from './entities/MatchEntity';
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
 
 export enum MatchRepositoryError {
-  FailedToFindMatch = 'Could not find match in database',
   FindMatchFailed = 'Could not find match in database',
+  UpdateAcknowledgeFailed = 'Update match was not acknowledged',
+  UpdateMatchFailed = 'Update match failed',
 }
 
 @injectable()
@@ -30,5 +31,19 @@ export class MatchRepository {
 
   public async bulkInsert(matchEntities: MatchEntity[]): Promise<InsertManyResult<MatchEntity>> {
     return this.matchCollection.insertMany(matchEntities);
+  }
+
+  public async updateOne(match_id: string, updateFields: UpdateFilter<MatchEntity>): Promise<void> {
+    const updateResult = await this.matchCollection.updateOne({ match_id }, { $set: updateFields });
+
+    if (!updateResult.acknowledged) {
+      throw new Error(MatchRepositoryError.UpdateAcknowledgeFailed);
+    }
+    if (updateResult.matchedCount === 0) {
+      throw new Error(MatchRepositoryError.FindMatchFailed);
+    }
+    if (updateResult.modifiedCount === 0) {
+      throw new Error(MatchRepositoryError.UpdateMatchFailed);
+    }
   }
 }

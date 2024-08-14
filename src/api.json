@@ -110,6 +110,49 @@
             "description": "Unable to perform the operation"
           }
         }
+      },
+      "put": {
+        "summary": "Update match with specific id",
+        "tags": ["Matches"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "$ref": "#/components/schemas/uuid"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "Match to update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/match"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Match successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/match"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
       }
     },
     "/matches/import": {
@@ -326,6 +369,12 @@
           },
           "location": {
             "type":  "string"
+          },
+          "availablePlayers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["date", "day", "homeTeam", "awayTeam", "location"]

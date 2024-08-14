@@ -1,4 +1,3 @@
-import { WithId } from 'mongodb';
 import { MatchEntity } from '../repositories/entities/MatchEntity';
 import { MatchRepository } from '../repositories/MatchRepository';
 import { inject, injectable } from 'inversify';
@@ -23,6 +22,18 @@ export class MatchesService {
     const matchEntity = await this.matchRepository.findById(matchId);
     return this.mapMatchEntityToMatch(matchEntity);
   }
+
+  public async updateMatch(matchId: string, newMatchData: Match): Promise<Match> {
+    const matchEntity = await this.matchRepository.findById(matchId);
+
+    const newMatchEntity: MatchEntity = {
+      ...matchEntity,
+      ...this.mapMatchToMatchEntity(newMatchData),
+      last_modified: new Date().toISOString(),
+    };
+
+    await this.matchRepository.updateOne(matchId, newMatchEntity);
+    return this.mapMatchEntityToMatch(newMatchEntity);
   }
 
   public async importMatches(): Promise<ApiResponse<Match[]>> {
@@ -66,14 +77,29 @@ export class MatchesService {
 
     return {
       statusCode: 201,
-      body: matchEntities.map((matchEntity) => ({
-        day: matchEntity.day,
-        date: matchEntity.date,
-        matchNumber: matchEntity.match_number,
-        homeTeam: matchEntity.home_team,
-        awayTeam: matchEntity.away_team,
-        location: matchEntity.location,
-      })),
+      body: matchEntities.map(this.mapMatchEntityToMatch),
+    };
+  }
+
+  private mapMatchEntityToMatch(matchEntity: MatchEntity): Match {
+    return {
+      day: matchEntity.day,
+      date: matchEntity.date,
+      homeTeam: matchEntity.home_team,
+      awayTeam: matchEntity.away_team,
+      location: matchEntity.location,
+      availablePlayers: matchEntity.available_players ?? [],
+    };
+  }
+
+  private mapMatchToMatchEntity(match: Match): Partial<MatchEntity> {
+    return {
+      day: match.day,
+      date: match.date,
+      home_team: match.homeTeam,
+      away_team: match.awayTeam,
+      location: match.location,
+      available_players: match.availablePlayers,
     };
   }
 }

@@ -30,7 +30,17 @@ export class MatchesController {
       return { statusCode: 500 };
     }
   }
+
+  public async updateMatch(matchId: string, newMatchData: Match): Promise<ApiResponse<Match | undefined>> {
+    try {
+      const match = await this.matchesService.updateMatch(matchId, newMatchData);
+      return { statusCode: 200, body: match };
     } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === MatchRepositoryError.FindMatchFailed) {
+          return { statusCode: 404 };
+        }
+      }
       return { statusCode: 500 };
     }
   }
