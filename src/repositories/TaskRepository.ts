@@ -3,6 +3,10 @@ import { Database } from '../Database';
 import { TaskEntity } from './entities/TaskEntity';
 import { Filter, InsertOneResult, UpdateFilter, UpdateResult } from 'mongodb';
 
+export enum TaskRepositoryError {
+  InsertAcknowledgeFailed = 'Insert was not acknowledged',
+}
+
 @injectable()
 export class TaskRepository {
   constructor(@inject(Database) private readonly db: Database) {
@@ -23,6 +27,13 @@ export class TaskRepository {
 
   public async insert(taskEntity: TaskEntity): Promise<InsertOneResult<TaskEntity>> {
     return this.taskCollection.insertOne(taskEntity);
+  }
+
+  public async bulkInsert(taskEntities: TaskEntity[]): Promise<void> {
+    const result = await this.taskCollection.insertMany(taskEntities);
+    if (!result.acknowledged) {
+      throw new Error(TaskRepositoryError.InsertAcknowledgeFailed);
+    }
   }
 
   public async updateOne(task_id: string, updateFields: UpdateFilter<TaskEntity>): Promise<UpdateResult<TaskEntity>> {
