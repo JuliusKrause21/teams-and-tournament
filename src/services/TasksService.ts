@@ -3,11 +3,14 @@ import { TaskRepository } from '../repositories/TaskRepository';
 import { TaskEntity } from '../repositories/entities/TaskEntity';
 import { isTaskQueryOption, Task, TaskQueryOptions } from '../models/Task';
 import { ApiResponse } from '../models/ApiResponse';
-import { games } from '../dummyData';
+import { MatchesService } from './MatchesService';
 
 @injectable()
 export class TasksService {
-  constructor(@inject(TaskRepository) private readonly taskRepository: TaskRepository) {}
+  constructor(
+    @inject(TaskRepository) private readonly taskRepository: TaskRepository,
+    @inject(MatchesService) private readonly matchesService: MatchesService
+  ) {}
 
   public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
     /*
@@ -57,13 +60,15 @@ export class TasksService {
       return { statusCode: 200 };
     }
 
-    // TODO: Replace dummy data by call to games repository and extend unit test
-    const game = games.find((game) => game.date === taskEntity.due_date);
-    if (!game) {
-      return { statusCode: 404 };
+    const matches = await this.matchesService.listMatches({ date: taskEntity.due_date });
+    if (matches.length > 1) {
+      return { statusCode: 500 };
+    }
+    if (matches.length === 0) {
+      return { statusCode: 200 };
     }
 
-    let availablePlayers = game.availablePlayers.filter(
+    let availablePlayers = matches[0].availablePlayers.filter(
       (availablePlayer) => !taskEntity.assigned.includes(availablePlayer)
     );
     if (availablePlayers.length === 0) {
@@ -85,13 +90,7 @@ export class TasksService {
 
   private async updateTaskEntity(taskId: string, taskEntity: TaskEntity): Promise<ApiResponse<Task | undefined>> {
     taskEntity.resolved = taskEntity.assigned.length === taskEntity.number_of_needs;
-    const updateResult = await this.taskRepository.updateOne(taskId, taskEntity);
-    if (!updateResult.acknowledged) {
-      return { statusCode: 500 };
-    }
-    if (updateResult.matchedCount === 0) {
-      return { statusCode: 404 };
-    }
+    await this.taskRepository.updateOne(taskId, taskEntity);
     return { statusCode: 200, body: this.mapTaskEntityToTask(taskEntity) };
   }
 

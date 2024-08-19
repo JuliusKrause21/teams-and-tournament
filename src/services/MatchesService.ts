@@ -3,7 +3,7 @@ import { MatchRepository } from '../repositories/MatchRepository';
 import { inject, injectable } from 'inversify';
 import { NuLigaFacade } from '../facades/NuLigaFacade';
 import { parse } from 'node-html-parser';
-import { Match } from '../models/Match';
+import { isMatchQueryOption, Match, MatchQueryOptions } from '../models/Match';
 import { TaskEntity } from '../repositories/entities/TaskEntity';
 import * as dummyData from '../dummyData';
 import { Condition } from '../dummyData';
@@ -22,8 +22,8 @@ export class MatchesService {
     @inject(NuLigaFacade) private readonly nuligaFacade: NuLigaFacade
   ) {}
 
-  public async listMatches(): Promise<Match[]> {
-    const matchEntities = await this.matchRepository.findAll();
+  public async listMatches(query?: MatchQueryOptions): Promise<Match[]> {
+    const matchEntities = await this.matchRepository.findAll(this.mapQueryToEntityQuery(query));
     return matchEntities.map(this.mapMatchEntityToMatch);
   }
 
@@ -69,6 +69,15 @@ export class MatchesService {
     await this.matchRepository.bulkInsert(matchEntities);
     console.table(taskEntities);
     await this.taskRepository.bulkInsert(taskEntities);
+  }
+
+  private mapQueryToEntityQuery(matchQuery?: MatchQueryOptions): Partial<MatchEntity> | undefined {
+    if (!isMatchQueryOption(matchQuery)) {
+      return;
+    }
+    return {
+      date: matchQuery.date,
+    };
   }
 
   private createDefaultTasks(matchEntity: MatchEntity): TaskEntity[] {

@@ -1,9 +1,13 @@
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
 import { TaskEntity } from './entities/TaskEntity';
-import { Filter, InsertOneResult, UpdateFilter, UpdateResult } from 'mongodb';
+import { Filter, InsertOneResult, UpdateFilter } from 'mongodb';
+import { MatchEntity } from './entities/MatchEntity';
 
 export enum TaskRepositoryError {
+  FindMatchFailed = 'Could not find task in database',
+  UpdateAcknowledgeFailed = 'Update task was not acknowledged',
+  UpdateMatchFailed = 'Update task failed',
   InsertAcknowledgeFailed = 'Insert was not acknowledged',
 }
 
@@ -36,7 +40,17 @@ export class TaskRepository {
     }
   }
 
-  public async updateOne(task_id: string, updateFields: UpdateFilter<TaskEntity>): Promise<UpdateResult<TaskEntity>> {
-    return this.taskCollection.updateOne({ task_id }, { $set: updateFields });
+  public async updateOne(task_id: string, updateFields: UpdateFilter<MatchEntity>): Promise<void> {
+    const updateResult = await this.taskCollection.updateOne({ task_id }, { $set: updateFields });
+
+    if (!updateResult.acknowledged) {
+      throw new Error(TaskRepositoryError.UpdateAcknowledgeFailed);
+    }
+    if (updateResult.matchedCount === 0) {
+      throw new Error(TaskRepositoryError.FindMatchFailed);
+    }
+    if (updateResult.modifiedCount === 0) {
+      throw new Error(TaskRepositoryError.UpdateMatchFailed);
+    }
   }
 }
