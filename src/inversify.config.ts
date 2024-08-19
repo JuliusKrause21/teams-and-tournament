@@ -15,6 +15,7 @@ import { TaskRepository } from './repositories/TaskRepository';
 import { TasksService } from './services/TasksService';
 import { TasksController } from './controllers/TasksController';
 import { TasksRoute } from './routes/TasksRoute';
+import { NuLigaFacade } from './facades/NuLigaFacade';
 
 export const container = new Container();
 
@@ -31,6 +32,9 @@ container.bind<Server>(Server).toSelf().inSingletonScope();
 container.bind<TeamRepository>(TeamRepository).toSelf().inSingletonScope();
 container.bind<MatchRepository>(MatchRepository).toSelf().inSingletonScope();
 container.bind<TaskRepository>(TaskRepository).toSelf().inSingletonScope();
+
+// facades
+container.bind<NuLigaFacade>(NuLigaFacade).toSelf().inSingletonScope();
 
 // services
 container.bind<TeamService>(TeamService).toSelf().inSingletonScope();

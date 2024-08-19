@@ -51,6 +51,7 @@ export class TasksService {
     }
 
     const missingPlayers = taskEntity.number_of_needs - taskEntity.assigned.length;
+
     if (missingPlayers <= 0) {
       // TODO: Logging statement and correct error message
       return { statusCode: 200 };

@@ -7,10 +7,16 @@ export class MatchesRoute {
   constructor(@inject(MatchesController) private readonly matchesController: MatchesController) {}
   public registerRoutes() {
     const matchesRouter = Router();
-    matchesRouter.get('/', async (_req: Request, res: Response) => {
-      const { statusCode, body } = await this.matchesController.listMatches();
-      res.status(statusCode).json(body);
-    });
+    matchesRouter.get('/', async (req: Request, res: Response) => this.matchesController.listMatches(req, res));
+
+    matchesRouter.get('/:id', async (req: Request, res: Response) => this.matchesController.findMatch(req, res));
+
+    matchesRouter.put('/:id', async (req: Request, res: Response) => this.matchesController.updateMatch(req, res));
+
+    matchesRouter.post('/import', async (req: Request, res: Response) =>
+      this.matchesController.importMatches(req, res)
+    );
+
     return matchesRouter;
   }
 }

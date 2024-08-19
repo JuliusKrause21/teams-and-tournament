@@ -37,7 +37,7 @@ export class Server {
     app.use('/matches', this.matchesRoute.registerRoutes());
     app.use('/tasks', this.tasksRoute.registerRoutes());
 
-    app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    app.use((err: unknown, _req: Request, res: Response) => {
       console.log('Custom error handler');
       if (isOpenApiError(err)) {
         const { status, message } = err as HttpError;
