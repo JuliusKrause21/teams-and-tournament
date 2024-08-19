@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
 import { TaskEntity } from './entities/TaskEntity';
-import { Filter, InsertOneResult, UpdateFilter } from 'mongodb';
+import { Filter, UpdateFilter } from 'mongodb';
 import { MatchEntity } from './entities/MatchEntity';
 
 export enum TaskRepositoryError {
-  FindMatchFailed = 'Could not find task in database',
+  FindTaskFailed = 'Could not find task in database',
   UpdateAcknowledgeFailed = 'Update task was not acknowledged',
   UpdateMatchFailed = 'Update task failed',
   InsertAcknowledgeFailed = 'Insert was not acknowledged',
@@ -24,13 +24,18 @@ export class TaskRepository {
     return this.taskCollection.find(filter, { projection: { _id: 0 } }).toArray();
   }
 
-  public findByTaskId(task_id: string): Promise<TaskEntity | null> {
+  public async findById(task_id: string): Promise<TaskEntity> {
     console.log(`Get task entity with id ${task_id}`);
-    return this.taskCollection.findOne({ task_id }, { projection: { _id: 0 } });
+    const taskEntity = await this.taskCollection.findOne({ task_id }, { projection: { _id: 0 } });
+    if (taskEntity === null) {
+      throw new Error(TaskRepositoryError.FindTaskFailed);
+    }
+    return taskEntity;
   }
 
-  public async insert(taskEntity: TaskEntity): Promise<InsertOneResult<TaskEntity>> {
-    return this.taskCollection.insertOne(taskEntity);
+  public async insert(taskEntity: TaskEntity): Promise<TaskEntity> {
+    await this.taskCollection.insertOne(taskEntity);
+    return taskEntity;
   }
 
   public async bulkInsert(taskEntities: TaskEntity[]): Promise<void> {
@@ -47,7 +52,7 @@ export class TaskRepository {
       throw new Error(TaskRepositoryError.UpdateAcknowledgeFailed);
     }
     if (updateResult.matchedCount === 0) {
-      throw new Error(TaskRepositoryError.FindMatchFailed);
+      throw new Error(TaskRepositoryError.FindTaskFailed);
     }
     if (updateResult.modifiedCount === 0) {
       throw new Error(TaskRepositoryError.UpdateMatchFailed);
