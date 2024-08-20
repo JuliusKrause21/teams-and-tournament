@@ -7,9 +7,12 @@ export class FirstJob implements Job {
 
   public schedule() {
     return {
-      handler: () => console.log('Hello'),
-      name: 'Hello',
-      schedule: '1 second',
+      handler: () => {
+        const date = new Date().toISOString();
+        console.log(date);
+      },
+      name: 'FirstJob',
+      schedule: '10 minutes',
     };
   }
 }

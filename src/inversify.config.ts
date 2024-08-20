@@ -18,6 +18,8 @@ import { TasksRoute } from './routes/TasksRoute';
 import { NuLigaFacade } from './facades/NuLigaFacade';
 import { Scheduler } from './Scheduler';
 import { FirstJob } from './jobs/FirstJob';
+import { JobsRoute } from './routes/JobsRoute';
+import { JobsController } from './controllers/JobsController';
 
 export const container = new Container();
 
@@ -53,8 +55,10 @@ container.bind<TasksService>(TasksService).toSelf().inSingletonScope();
 container.bind<TeamsController>(TeamsController).toSelf().inSingletonScope();
 container.bind<MatchesController>(MatchesController).toSelf().inSingletonScope();
 container.bind<TasksController>(TasksController).toSelf().inSingletonScope();
+container.bind<JobsController>(JobsController).toSelf().inSingletonScope();
 
 // routes
 container.bind<TeamsRoute>(TeamsRoute).toSelf();
 container.bind<MatchesRoute>(MatchesRoute).toSelf();
 container.bind<TasksRoute>(TasksRoute).toSelf();
+container.bind<JobsRoute>(JobsRoute).toSelf();

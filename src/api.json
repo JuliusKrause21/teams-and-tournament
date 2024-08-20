@@ -5,7 +5,12 @@
     "description": "API for handling teams and tournament administration",
     "version": "0.0.1"
   },
-  "tags": [{ "name": "Teams" }, { "name": "Matches" }, { "name":  "Tasks" }],
+  "tags": [
+    { "name": "Teams" },
+    { "name": "Matches" },
+    { "name": "Tasks" },
+    { "name": "Jobs" }
+  ],
   "servers": [],
   "paths": {
     "/teams": {
@@ -348,6 +353,20 @@
           },
           "404": {
             "description": "Not found"
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
+    },
+    "/jobs/trigger-first-job": {
+      "post": {
+        "summary": "Trigger job",
+        "tags": ["Jobs"],
+        "responses": {
+          "200": {
+            "description": "Job successfully triggered"
           },
           "500": {
             "description": "Unable to perform the operation"

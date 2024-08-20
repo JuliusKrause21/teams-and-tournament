@@ -10,13 +10,15 @@ import { HttpError } from 'express-openapi-validator/dist/framework/types';
 import { isOpenApiError } from './models/OpenApiError';
 import swaggerUi from 'swagger-ui-express';
 import apiJson from './api.json';
+import { JobsRoute } from './routes/JobsRoute';
 
 @injectable()
 export class Server {
   constructor(
     @inject(TeamsRoute) private teamsRoute: TeamsRoute,
     @inject(MatchesRoute) private readonly matchesRoute: MatchesRoute,
-    @inject(TasksRoute) private readonly tasksRoute: TasksRoute
+    @inject(TasksRoute) private readonly tasksRoute: TasksRoute,
+    @inject(JobsRoute) private readonly jobsRoute: JobsRoute
   ) {}
 
   public async start() {
@@ -40,6 +42,7 @@ export class Server {
     app.use('/teams', this.teamsRoute.registerRoutes());
     app.use('/matches', this.matchesRoute.registerRoutes());
     app.use('/tasks', this.tasksRoute.registerRoutes());
+    app.use('/jobs', this.jobsRoute.registerRoutes());
 
     app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
       console.log('Custom error handler');

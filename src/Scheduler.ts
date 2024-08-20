@@ -42,6 +42,14 @@ export class Scheduler {
     await this.scheduleJob(this.job.schedule());
   }
 
+  public async runJob(name: string): Promise<void> {
+    const job = await this.pulse?.jobs({ name });
+    if (!job || job.length === 0) {
+      throw new Error('Could not run job');
+    }
+    job[0].run();
+  }
+
   private async scheduleJob(pulseJob: PulseJob): Promise<void> {
     this.pulse?.define(pulseJob.name, (_job, done) => {
       pulseJob.handler();
