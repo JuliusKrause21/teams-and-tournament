@@ -3,14 +3,16 @@ import { MatchesService, MatchesServiceError } from '../services/MatchesService'
 import { MatchRepositoryError } from '../repositories/MatchRepository';
 import { Request, Response } from 'express';
 import { NuLigaFacadeError } from '../facades/NuLigaFacade';
+import { isMatchQueryOption } from '../models/Match';
 
 @injectable()
 export class MatchesController {
   constructor(@inject(MatchesService) private readonly matchesService: MatchesService) {}
 
-  public async listMatches(_req: Request, res: Response): Promise<void> {
+  public async listMatches(req: Request, res: Response): Promise<void> {
+    const query = isMatchQueryOption(req.query) ? req.query : undefined;
     try {
-      const matches = await this.matchesService.listMatches();
+      const matches = await this.matchesService.listMatches(query);
       res.status(200).json(matches);
     } catch (error) {
       this.handleMatchesErrors(error, res);

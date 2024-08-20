@@ -1,4 +1,4 @@
-import { UpdateFilter } from 'mongodb';
+import { Filter, UpdateFilter } from 'mongodb';
 import { MatchEntity } from './entities/MatchEntity';
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
@@ -18,8 +18,9 @@ export class MatchRepository {
 
   private matchCollection;
 
-  public async findAll(): Promise<MatchEntity[]> {
-    return this.matchCollection.find({}, { projection: { _id: 0 } }).toArray();
+  public async findAll(filter: Filter<MatchEntity> = {}): Promise<MatchEntity[]> {
+    console.log(`Filter match repository with query ${JSON.stringify(filter)}`);
+    return this.matchCollection.find(filter, { projection: { _id: 0 } }).toArray();
   }
 
   public async findById(match_id: string): Promise<MatchEntity> {

@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { Request, Response, Router } from 'express';
 import { TasksController } from '../controllers/TasksController';
-import { TaskQueryOptions } from '../models/Task';
 
 @injectable()
 export class TasksRoute {
@@ -9,39 +8,17 @@ export class TasksRoute {
   public registerRoutes() {
     const tasksRouter = Router();
 
-    tasksRouter.get('/', async (req: Request, res: Response) => {
-      console.log(`List tasks with query ${JSON.stringify(req.query)}`);
-      const { dueDate } = req.query;
-      const { statusCode, body } = await this.tasksController.listTasks({ dueDate } as TaskQueryOptions);
-      res.status(statusCode).json(body);
-    });
+    tasksRouter.get('/', async (req: Request, res: Response) => this.tasksController.listTasks(req, res));
 
-    tasksRouter.get('/:id', async (req: Request, res: Response) => {
-      const { id } = req.params;
-      console.log(`Getting task with id ${id}`);
-      const { statusCode, body } = await this.tasksController.getTask(id);
-      res.status(statusCode).json(body);
-    });
+    tasksRouter.get('/:id', async (req: Request, res: Response) => this.tasksController.findTask(req, res));
 
-    tasksRouter.post('/', async (req: Request, res: Response) => {
-      const { body } = req;
-      const { statusCode } = await this.tasksController.createTask(body);
-      res.status(statusCode).send();
-    });
+    tasksRouter.post('/', async (req: Request, res: Response) => this.tasksController.createTask(req, res));
 
-    tasksRouter.put('/:id', async (req: Request, res: Response) => {
-      const { id } = req.params;
-      console.log(`Update task with id ${id}`);
-      const { statusCode, body } = await this.tasksController.updateTask(id, req.body);
-      res.status(statusCode).send(body);
-    });
+    tasksRouter.put('/:id', async (req: Request, res: Response) => this.tasksController.updateTask(req, res));
 
-    tasksRouter.put('/:id/assign', async (req: Request, res: Response) => {
-      const { id } = req.params;
-      console.log(`Update task with id ${id}`);
-      const { statusCode, body } = await this.tasksController.assignRandomly(id);
-      res.status(statusCode).send(body);
-    });
+    tasksRouter.put('/:id/assign', async (req: Request, res: Response) =>
+      this.tasksController.assignRandomly(req, res)
+    );
 
     return tasksRouter;
   }

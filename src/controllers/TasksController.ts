@@ -1,53 +1,74 @@
 import { inject, injectable } from 'inversify';
-import { ApiResponse } from '../models/ApiResponse';
 import { TasksService } from '../services/TasksService';
-import { Task, TaskQueryOptions } from '../models/Task';
+import { isTaskQueryOption } from '../models/Task';
+import { Request, Response } from 'express';
+import { TaskRepositoryError } from '../repositories/TaskRepository';
 
 @injectable()
 export class TasksController {
   constructor(@inject(TasksService) private readonly tasksService: TasksService) {}
-  public async listTasks(query?: TaskQueryOptions): Promise<ApiResponse<Task[]>> {
+  public async listTasks(req: Request, res: Response): Promise<void> {
+    const query = isTaskQueryOption(req.query) ? req.query : undefined;
     try {
-      const { statusCode, body } = await this.tasksService.listTasks(query);
-      return { statusCode, body };
+      const tasks = await this.tasksService.listTasks(query);
+      res.status(200).json(tasks);
     } catch (error) {
-      return { statusCode: 500 };
+      this.handleTasksErrors(error, res);
     }
   }
 
-  public async getTask(taskId: string): Promise<ApiResponse<Task>> {
+  public async findTask(req: Request, res: Response): Promise<void> {
     try {
-      return this.tasksService.getTask(taskId);
+      const { id } = req.params;
+      const task = this.tasksService.getTask(id);
+      res.status(200).json(task);
     } catch (error) {
-      return { statusCode: 500 };
+      this.handleTasksErrors(error, res);
     }
   }
 
-  public async createTask(task: Task): Promise<ApiResponse<undefined>> {
+  public async createTask(req: Request, res: Response): Promise<void> {
     try {
-      return this.tasksService.createTask(task);
+      const task = await this.tasksService.createTask(req.body);
+      res.status(201).header('Location', `/tasks/${task.taskId}`).json(task);
     } catch (error) {
-      return { statusCode: 500 };
+      this.handleTasksErrors(error, res);
     }
   }
 
-  public async updateTask(taskId: string, task: Task): Promise<ApiResponse<Task | undefined>> {
+  public async updateTask(req: Request, res: Response): Promise<void> {
     try {
-      const { statusCode, body } = await this.tasksService.updateTask(taskId, task);
-      return { statusCode, body };
+      const { id } = req.params;
+      const task = await this.tasksService.updateTask(id, req.body);
+      res.status(200).json(task);
     } catch (error) {
-      // Here the error is lost, it should not be presented to the user but it should be logged.
-      return { statusCode: 500 };
+      this.handleTasksErrors(error, res);
     }
   }
 
-  public async assignRandomly(taskId: string): Promise<ApiResponse<Task | undefined>> {
+  public async assignRandomly(req: Request, res: Response): Promise<void> {
     try {
-      const { statusCode } = await this.tasksService.assignRandomly(taskId);
-      return { statusCode };
+      const { id } = req.params;
+      const task = await this.tasksService.assignRandomly(id);
+      res.status(200).json(task);
     } catch (error) {
-      // Here the error is lost, it should not be presented to the user but it should be logged.
-      return { statusCode: 500 };
+      this.handleTasksErrors(error, res);
+    }
+  }
+
+  private handleTasksErrors(error: unknown, res: Response): void {
+    if (error instanceof Error) {
+      switch (error.message) {
+        case TaskRepositoryError.FindTaskFailed:
+          res.sendStatus(404);
+          break;
+        case TaskRepositoryError.UpdateAcknowledgeFailed:
+        case TaskRepositoryError.InsertAcknowledgeFailed:
+          res.sendStatus(500);
+          break;
+      }
+    } else {
+      res.sendStatus(500);
     }
   }
 }
