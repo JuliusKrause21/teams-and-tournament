@@ -1,10 +1,14 @@
 import { Container, inject, injectable } from 'inversify';
 import { Server } from './Server';
 import { Database } from './Database';
+import { Scheduler } from './Scheduler';
 
 @injectable()
 export class Application {
-  constructor(@inject(Server) private readonly server: Server) {}
+  constructor(
+    @inject(Server) private readonly server: Server,
+    @inject(Scheduler) private readonly scheduler: Scheduler
+  ) {}
   public static async startup(container: Container): Promise<void> {
     const uri = 'mongodb://localhost:27017/test';
 
@@ -23,13 +27,18 @@ export class Application {
     establish too soon and everytime an instance of the Application is injected
      */
     try {
-      application.startExpressServer();
+      await application.startScheduler();
+      await application.startExpressServer();
     } catch (error) {
       console.log('Failed to start express server');
     }
   }
 
-  private startExpressServer() {
-    this.server.start();
+  private async startExpressServer() {
+    await this.server.start();
+  }
+
+  private async startScheduler() {
+    await this.scheduler.start();
   }
 }

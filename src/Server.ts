@@ -19,7 +19,7 @@ export class Server {
     @inject(TasksRoute) private readonly tasksRoute: TasksRoute
   ) {}
 
-  public start() {
+  public async start() {
     console.log('Starting express server');
     const app = express();
 

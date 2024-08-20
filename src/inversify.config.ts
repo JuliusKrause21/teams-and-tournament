@@ -16,6 +16,8 @@ import { TasksService } from './services/TasksService';
 import { TasksController } from './controllers/TasksController';
 import { TasksRoute } from './routes/TasksRoute';
 import { NuLigaFacade } from './facades/NuLigaFacade';
+import { Scheduler } from './Scheduler';
+import { Job } from './jobs/Job';
 
 export const container = new Container();
 
@@ -27,6 +29,12 @@ container.bind<Database>(Database).toSelf().inSingletonScope();
 
 // server
 container.bind<Server>(Server).toSelf().inSingletonScope();
+
+// scheduler
+container.bind<Scheduler>(Scheduler).toSelf().inSingletonScope();
+
+// jobs
+container.bind<Job>(Job).toSelf().inSingletonScope();
 
 // repositories
 container.bind<TeamRepository>(TeamRepository).toSelf().inSingletonScope();
