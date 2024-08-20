@@ -17,7 +17,7 @@ import { TasksController } from './controllers/TasksController';
 import { TasksRoute } from './routes/TasksRoute';
 import { NuLigaFacade } from './facades/NuLigaFacade';
 import { Scheduler } from './Scheduler';
-import { Job } from './jobs/Job';
+import { FirstJob } from './jobs/FirstJob';
 
 export const container = new Container();
 
@@ -34,7 +34,7 @@ container.bind<Server>(Server).toSelf().inSingletonScope();
 container.bind<Scheduler>(Scheduler).toSelf().inSingletonScope();
 
 // jobs
-container.bind<Job>(Job).toSelf().inSingletonScope();
+container.bind<FirstJob>(FirstJob).toSelf().inSingletonScope();
 
 // repositories
 container.bind<TeamRepository>(TeamRepository).toSelf().inSingletonScope();

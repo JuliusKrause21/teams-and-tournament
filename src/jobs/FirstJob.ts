@@ -1,16 +1,11 @@
 import { injectable } from 'inversify';
-
-export interface PulseJob {
-  handler: () => void;
-  schedule: string;
-  name: string;
-}
+import { Job } from '../Scheduler';
 
 @injectable()
-export class Job {
+export class FirstJob implements Job {
   constructor() {}
 
-  public schedule(): PulseJob {
+  public schedule() {
     return {
       handler: () => console.log('Hello'),
       name: 'Hello',

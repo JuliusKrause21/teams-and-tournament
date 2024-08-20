@@ -1,14 +1,24 @@
 import { Pulse } from '@pulsecron/pulse';
 import { inject, injectable } from 'inversify';
-import { Job, PulseJob } from './jobs/Job';
+import { FirstJob } from './jobs/FirstJob';
+
+export interface PulseJob {
+  handler: () => void;
+  schedule: string;
+  name: string;
+}
+
+export interface Job {
+  schedule: () => PulseJob;
+}
 
 @injectable()
 export class Scheduler {
-  constructor(@inject(Job) private readonly job: Job) {}
+  constructor(@inject(FirstJob) private readonly job: FirstJob) {}
 
   private pulse: Pulse | undefined;
   private pulseConfig = {
-    processEvery: '1 minute',
+    processEvery: '1 day',
     maxConcurrency: 10,
     db: {
       address: 'mongodb://localhost:27017/jobs',
