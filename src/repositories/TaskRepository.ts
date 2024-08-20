@@ -7,7 +7,6 @@ import { MatchEntity } from './entities/MatchEntity';
 export enum TaskRepositoryError {
   FindTaskFailed = 'Could not find task in database',
   UpdateAcknowledgeFailed = 'Update task was not acknowledged',
-  UpdateMatchFailed = 'Update task failed',
   InsertAcknowledgeFailed = 'Insert was not acknowledged',
 }
 
@@ -53,9 +52,6 @@ export class TaskRepository {
     }
     if (updateResult.matchedCount === 0) {
       throw new Error(TaskRepositoryError.FindTaskFailed);
-    }
-    if (updateResult.modifiedCount === 0) {
-      throw new Error(TaskRepositoryError.UpdateMatchFailed);
     }
   }
 }

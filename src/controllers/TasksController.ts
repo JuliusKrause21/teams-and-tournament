@@ -30,7 +30,7 @@ export class TasksController {
   public async createTask(req: Request, res: Response): Promise<void> {
     try {
       const task = await this.tasksService.createTask(req.body);
-      res.send(201).json(task);
+      res.status(201).header('Location', `/tasks/${task.taskId}`).json(task);
     } catch (error) {
       this.handleTasksErrors(error, res);
     }
@@ -62,13 +62,13 @@ export class TasksController {
         case TaskRepositoryError.FindTaskFailed:
           res.sendStatus(404);
           break;
-        case TaskRepositoryError.UpdateMatchFailed:
         case TaskRepositoryError.UpdateAcknowledgeFailed:
         case TaskRepositoryError.InsertAcknowledgeFailed:
           res.sendStatus(500);
           break;
       }
+    } else {
+      res.sendStatus(500);
     }
-    res.sendStatus(500);
   }
 }

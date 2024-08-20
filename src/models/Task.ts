@@ -5,6 +5,7 @@ export enum TaskType {
 
 export interface Task {
   type: TaskType;
+  taskId: string | undefined;
   description: string;
   dueDate: string;
   assignedPlayers: string[];

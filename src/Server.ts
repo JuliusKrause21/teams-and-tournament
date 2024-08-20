@@ -37,16 +37,17 @@ export class Server {
     app.use('/matches', this.matchesRoute.registerRoutes());
     app.use('/tasks', this.tasksRoute.registerRoutes());
 
-    app.use((err: unknown, _req: Request, res: Response) => {
+    app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
       console.log('Custom error handler');
       if (isOpenApiError(err)) {
-        const { status, message } = err as HttpError;
-        res.status(status || 500).send(message);
+        const { status } = err as HttpError;
+        res.status(status || 500).send(err);
       } else {
         res.status(500).json({
           err,
         });
       }
+      next();
     });
 
     app.listen(3000, () => console.log('Server listen on port 3000'));

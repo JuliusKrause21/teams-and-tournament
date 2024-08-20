@@ -32,17 +32,17 @@ export class TasksService {
     return this.mapTaskEntityToTask(taskEntity);
   }
 
-  public async createTask(task: Task): Promise<Task & { location: string }> {
+  public async createTask(task: Task): Promise<Task> {
     const test = new TaskEntity(this.mapTaskToTaskEntity(task));
 
     const taskEntity = await this.taskRepository.insert(test);
-    return { ...this.mapTaskEntityToTask(taskEntity), location: `/tasks/${taskEntity.task_id}` };
+    return { ...this.mapTaskEntityToTask(taskEntity) };
   }
 
   public async updateTask(taskId: string, task: Task): Promise<Task> {
     console.log(`Update task with id ${taskId}`);
-    const taskEntity = this.mapTaskToTaskEntity(task);
-    return this.updateTaskEntity(taskId, taskEntity);
+    const taskEntity = await this.taskRepository.findById(taskId);
+    return this.updateTaskEntity(taskId, { ...taskEntity, ...this.mapTaskToTaskEntity(task) });
   }
 
   public async assignRandomly(taskId: string): Promise<Task> {
@@ -116,6 +116,7 @@ export class TasksService {
   private mapTaskEntityToTask(taskEntity: TaskEntity): Task {
     return {
       type: taskEntity.type,
+      taskId: taskEntity.task_id,
       description: taskEntity.description,
       assignedPlayers: taskEntity.assigned,
       dueDate: taskEntity.due_date,

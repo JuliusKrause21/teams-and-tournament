@@ -231,7 +231,22 @@
         },
         "responses": {
           "201": {
-            "description": "Task was successfully created"
+            "description": "Task was successfully created",
+            "headers": {
+              "Location": {
+                "description": "Task id that has been created",
+                "schema": {
+                  "$ref": "#/components/schemas/uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/task"
+                }
+              }
+            }
           }
         }
       }
@@ -295,7 +310,14 @@
         },
         "responses": {
           "200": {
-            "description": "Task successfully updated"
+            "description": "Task successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/task"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not found"
@@ -387,6 +409,9 @@
             "type": "string",
             "enum": ["simple", "complex"]
           },
+          "taskId": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -403,7 +428,7 @@
             "type": "number"
           }
         },
-        "required": ["type", "dueDate", "assignedPlayers", "numberOfNeeds"],
+        "required": ["type", "description","dueDate", "assignedPlayers", "numberOfNeeds"],
         "additionalProperties": false
       }
     }

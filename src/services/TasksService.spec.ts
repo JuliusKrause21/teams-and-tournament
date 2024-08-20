@@ -27,6 +27,7 @@ describe('TasksService', () => {
 
   const expectedTaskOne: Task = {
     type: TaskType.Simple,
+    taskId: undefined,
     description: 'Something to do',
     dueDate: dueDateOne,
     assignedPlayers: [],
@@ -35,6 +36,7 @@ describe('TasksService', () => {
 
   const expectedTaskTwo: Task = {
     type: TaskType.Simple,
+    taskId: undefined,
     description: 'Something to do',
     dueDate: dueDateTwo,
     assignedPlayers: [],
@@ -90,6 +92,7 @@ describe('TasksService', () => {
     const mockedLastModified = '2000-01-01T00:00:00.000Z';
     const task: Task = {
       type: TaskType.Simple,
+      taskId: undefined,
       description: 'Something to do',
       dueDate: dueDateOne,
       assignedPlayers: [],
@@ -119,7 +122,7 @@ describe('TasksService', () => {
       when(taskRepository.insert(objectContaining(mockedTaskEntity))).thenResolve(mockedTaskEntity);
 
       const result = await tasksService.createTask(task);
-      expect(result).toStrictEqual({ ...task, location: `/tasks/${mockedTaskId}` });
+      expect(result).toStrictEqual({ ...task, taskId: mockedTaskId });
     });
 
     test('failed to acknowledge task creation', async () => {
@@ -136,14 +139,16 @@ describe('TasksService', () => {
     const assignedPlayers = ['Julius'];
     const task: Task = {
       type: TaskType.Simple,
+      taskId: mockedUuid,
       description: 'Something to do',
       dueDate: dueDateOne,
       assignedPlayers: [],
       numberOfNeeds: 2,
     };
     test('to update task', async () => {
-      const updatedEntity: TaskEntity = {
+      const taskEntity: TaskEntity = {
         type: TaskType.Simple,
+        task_id: mockedUuid,
         description: 'Something to do',
         due_date: dueDateOne,
         assigned: assignedPlayers,
@@ -151,7 +156,8 @@ describe('TasksService', () => {
         resolved: false,
       };
       const expectedTask = { ...task, assignedPlayers };
-      when(taskRepository.updateOne(mockedUuid, deepEqual(updatedEntity))).thenResolve();
+      when(taskRepository.findById(mockedUuid)).thenResolve({ ...taskEntity });
+      when(taskRepository.updateOne(mockedUuid, deepEqual({ ...taskEntity, assinged: assignedPlayers }))).thenResolve();
       const result = await tasksService.updateTask(mockedUuid, { ...task, assignedPlayers });
       expect(result).toStrictEqual(expectedTask);
     });
@@ -208,6 +214,7 @@ describe('TasksService', () => {
 
     const task: Task = {
       type: taskEntity.type,
+      taskId: mockedUuid,
       description: taskEntity.description,
       assignedPlayers: taskEntity.assigned,
       numberOfNeeds: taskEntity.number_of_needs,
