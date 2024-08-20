@@ -8,6 +8,8 @@ import path from 'node:path';
 import { TasksRoute } from './routes/TasksRoute';
 import { HttpError } from 'express-openapi-validator/dist/framework/types';
 import { isOpenApiError } from './models/OpenApiError';
+import swaggerUi from 'swagger-ui-express';
+import apiJson from './api.json';
 
 @injectable()
 export class Server {
@@ -22,6 +24,8 @@ export class Server {
     const app = express();
 
     app.use(bodyParser.json());
+
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(apiJson));
 
     app.use(
       middleware({ apiSpec: path.join(__dirname, './api.json'), validateRequests: true, validateResponses: true })
