@@ -1,27 +1,35 @@
 import { inject, injectable } from 'inversify';
 import { TeamService } from '../services/TeamService';
-import { ApiResponse } from '../models/ApiResponse';
-import { Teams } from '../models/Teams';
-import { TeamEntity } from '../repositories/entities/TeamEntity';
+import { Request, Response } from 'express';
 
 @injectable()
 export class TeamsController {
   constructor(@inject(TeamService) private readonly teamsService: TeamService) {}
-  public async listTeams(): Promise<ApiResponse<Teams[]>> {
+  public async listTeams(_req: Request, res: Response): Promise<void> {
     try {
       const teams = await this.teamsService.listTeams();
-      return { statusCode: 200, body: teams };
+      res.status(200).json(teams);
     } catch (error) {
-      return { statusCode: 500 };
+      res.sendStatus(500);
     }
   }
 
-  public async createTeam(teamEntity: TeamEntity): Promise<ApiResponse<undefined>> {
+  public async createTeam(req: Request, res: Response): Promise<void> {
     try {
-      await this.teamsService.createTeam(teamEntity);
-      return { statusCode: 201 };
+      await this.teamsService.createTeam(req.body);
+      res.sendStatus(201);
     } catch (error) {
-      return { statusCode: 500 };
+      res.sendStatus(500);
+    }
+  }
+
+  public async shuffleGroups(req: Request, res: Response): Promise<void> {
+    console.log('Shuffle groups');
+    try {
+      const groups = await this.teamsService.shuffleGroups(req.body);
+      res.status(200).json(groups);
+    } catch (error) {
+      res.status(500).json(error);
     }
   }
 }
