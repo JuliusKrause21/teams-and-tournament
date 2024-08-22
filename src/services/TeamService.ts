@@ -4,6 +4,7 @@ import { inject, injectable } from 'inversify';
 import { Group, Team, TeamQueryOptions } from '../models/Team';
 import { scheduleConfig } from '../dummyData';
 import { DateTime } from 'luxon';
+import { groupBy } from 'lodash';
 
 export interface ShuffleParameters {
   numberOfGroups: number;
@@ -14,6 +15,7 @@ interface Game {
   group: number;
   team: string;
   opponent: string;
+  slot?: number;
 }
 
 type MatchPlan = Game[];
@@ -52,7 +54,9 @@ export class TeamService {
     }
     const matchPlan = this.setupMatchPlan(groups);
     console.table(matchPlan);
-    const scheduledMatchPlan = this.scheduleMatches(matchPlan, numberOfGroups);
+    const slottedMatchPlan = this.adjustMatchSlots(matchPlan);
+    console.log(slottedMatchPlan);
+    const scheduledMatchPlan = this.scheduleMatches(matchPlan);
     console.table(scheduledMatchPlan);
 
     const teamsUpdateData: bulkUpdate[] = groups.flatMap((group) =>
@@ -77,36 +81,110 @@ export class TeamService {
     );
     console.table(games);
 
-    return groups.flatMap((group) =>
-      games
-        .filter((game) => game.group === group.number)
-        .slice(0, group.teams.length - 1)
-        .map((game, index) => ({ ...game, number: 2 * index + 1 }))
-        .concat(
-          games
-            .filter((game) => game.group === group.number)
-            .slice(group.teams.length - 1)
-            .reverse()
-            .map((game, index) => ({ ...game, number: 2 * index + 2 }))
-        )
-        .sort((a, b) => a.number - b.number)
+    return groups
+      .flatMap((group) =>
+        games
+          .filter((game) => game.group === group.number)
+          .slice(0, group.teams.length - 1)
+          .map((game, index) => ({ ...game, number: 2 * index + 1 }))
+          .concat(
+            games
+              .filter((game) => game.group === group.number)
+              .slice(group.teams.length - 1)
+              .reverse()
+              .map((game, index) => ({ ...game, number: 2 * index + 2 }))
+          )
+      )
+      .sort((a, b) => a.number - b.number);
+  }
+
+  public adjustMatchSlots(matchPlan: MatchPlan): MatchPlan {
+    console.log('Adjust matchplan');
+    console.log(matchPlan);
+    let slot = 0;
+    const slottedMatchPlan: MatchPlan = matchPlan.map((match, index) => {
+      if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
+        slot++;
+      }
+      return {
+        ...match,
+        slot,
+      };
+    });
+
+    const swaps = groupBy(this.validateMatchPlan(slottedMatchPlan), 'slot');
+    const slots = Object.keys(swaps);
+    console.log(`Grouped swaps : ${JSON.stringify(swaps)}`);
+
+    const possibleSwaps = [];
+    for (let iSlot = 0; iSlot < slots.length - 1; iSlot++) {
+      for (let iMatch = 0; iMatch < swaps[slots[iSlot]].length; iMatch++) {
+        for (let iSwap = 0; iSwap < swaps[slots[iSlot + 1]].length; iSwap++) {
+          possibleSwaps.push({ match: swaps[slots[iSlot]][iMatch], swap: swaps[slots[iSlot + 1]][iSwap] });
+        }
+      }
+    }
+
+    console.log(possibleSwaps);
+
+    // generate possible swaps
+
+    for (const possibleSwap of possibleSwaps) {
+      const updatedSlots = [...slottedMatchPlan];
+      const matchIndex = updatedSlots.indexOf(possibleSwap.match);
+      const swapIndex = updatedSlots.indexOf(possibleSwap.swap);
+
+      updatedSlots[matchIndex] = {
+        ...possibleSwap.swap,
+        number: possibleSwap.match.number,
+        slot: possibleSwap.match.slot,
+      };
+      updatedSlots[swapIndex] = {
+        ...possibleSwap.match,
+        number: possibleSwap.swap.number,
+        slot: possibleSwap.swap.slot,
+      };
+      console.log(updatedSlots);
+      const nextSwaps = this.validateMatchPlan(updatedSlots);
+      console.log(nextSwaps);
+      if (nextSwaps.length === 0) {
+        console.log('Found adjustment');
+        return updatedSlots;
+      }
+    }
+    return slottedMatchPlan;
+  }
+
+  private validateMatchPlan(matchPlan: MatchPlan): MatchPlan {
+    return matchPlan.filter((match, index) =>
+      matchPlan.some(
+        (otherMatch, idx) =>
+          otherMatch.slot === match.slot &&
+          (otherMatch.team === match.team ||
+            otherMatch.opponent === match.opponent ||
+            otherMatch.team === match.opponent ||
+            otherMatch.opponent === match.team) &&
+          index !== idx
+      )
     );
   }
 
-  private scheduleMatches(matchPlan: MatchPlan, numberOfGroups: number): ScheduledMatchPlan {
-    if (scheduleConfig.numberOfPitches === numberOfGroups) {
-      return matchPlan.map((match) => ({
+  private scheduleMatches(matchPlan: MatchPlan): ScheduledMatchPlan {
+    let slot = 0;
+    return matchPlan.map((match, index) => {
+      if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
+        slot++;
+      }
+      return {
         ...match,
         start:
           DateTime.fromISO(scheduleConfig.startTime)
             .plus({
-              minutes:
-                (match.number - 1) * scheduleConfig.playTime + (match.number - 1) * scheduleConfig.breakBetweenMatches,
+              minutes: slot * scheduleConfig.playTime + slot * scheduleConfig.breakBetweenMatches,
             })
             .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? '',
-      }));
-    }
-    return [] as ScheduledMatchPlan;
+      };
+    });
   }
 
   private mapTeamEntityToTeam(teamEntity: TeamEntity): Team {

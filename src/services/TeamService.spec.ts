@@ -56,4 +56,26 @@ describe('TeamService', () => {
       expect(result).toStrictEqual(expectedGroups);
     });
   });
+
+  describe('adjustMatchSlots', () => {
+    const matchPlan = [
+      { team: 'one', group: 1, opponent: 'two', number: 1 },
+      { team: 'five', group: 2, opponent: 'six', number: 1 },
+      { team: 'three', group: 1, opponent: 'four', number: 2 },
+      { team: 'seven', group: 2, opponent: 'eight', number: 2 },
+      { team: 'one', group: 1, opponent: 'three', number: 3 },
+      { team: 'five', group: 2, opponent: 'seven', number: 3 },
+      { team: 'two', group: 1, opponent: 'four', number: 4 },
+      { team: 'six', group: 2, opponent: 'eight', number: 4 },
+      { team: 'one', group: 1, opponent: 'four', number: 5 },
+      { team: 'five', group: 2, opponent: 'eight', number: 5 },
+      { team: 'two', group: 1, opponent: 'three', number: 6 },
+      { team: 'six', group: 2, opponent: 'seven', number: 6 },
+    ];
+
+    test('to adjust slots correctly', async () => {
+      const result = teamService.adjustMatchSlots(matchPlan);
+      expect(result).toBeDefined();
+    });
+  });
 });
