@@ -1,7 +1,7 @@
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { bulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { inject, injectable } from 'inversify';
-import { Group, Team } from '../models/Team';
+import { Group, Team, TeamQueryOptions } from '../models/Team';
 
 export interface ShuffleParameters {
   numberOfGroups: number;
@@ -11,12 +11,12 @@ export interface ShuffleParameters {
 export class TeamService {
   constructor(@inject(TeamRepository) private readonly teamRepository: TeamRepository) {}
 
-  public async listTeams(): Promise<Team[]> {
+  public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
     /*
     This just returns the result of the repository call, but this is the place where the business logic is implemented
     Calls to several repositories, data combination and mapping takes place here.
      */
-    const teamEntities = await this.teamRepository.findAll();
+    const teamEntities = await this.teamRepository.findAll(query);
     return teamEntities.map(this.mapTeamEntityToTeam);
   }
 

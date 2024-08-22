@@ -1,4 +1,4 @@
-import { UpdateFilter } from 'mongodb';
+import { Filter, UpdateFilter } from 'mongodb';
 import { TeamEntity } from './entities/TeamEntity';
 import { inject, injectable } from 'inversify';
 import { Database } from '../Database';
@@ -21,8 +21,8 @@ export class TeamRepository {
 
   private teamCollection;
 
-  public findAll(): Promise<TeamEntity[]> {
-    return this.teamCollection.find({}, { projection: { _id: 0 } }).toArray();
+  public findAll(filter: Filter<TeamEntity> = {}): Promise<TeamEntity[]> {
+    return this.teamCollection.find(filter, { projection: { _id: 0 } }).toArray();
   }
 
   public async insert(teamEntity: TeamEntity) {

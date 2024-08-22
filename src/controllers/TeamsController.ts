@@ -1,13 +1,15 @@
 import { inject, injectable } from 'inversify';
 import { TeamService } from '../services/TeamService';
 import { Request, Response } from 'express';
+import { isTeamQueryOption } from '../models/Team';
 
 @injectable()
 export class TeamsController {
   constructor(@inject(TeamService) private readonly teamsService: TeamService) {}
-  public async listTeams(_req: Request, res: Response): Promise<void> {
+  public async listTeams(req: Request, res: Response): Promise<void> {
+    const query = isTeamQueryOption(req.query) ? req.query : undefined;
     try {
-      const teams = await this.teamsService.listTeams();
+      const teams = await this.teamsService.listTeams(query);
       res.status(200).json(teams);
     } catch (error) {
       res.sendStatus(500);

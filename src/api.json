@@ -12,6 +12,17 @@
       "get": {
         "summary": "Get all teams",
         "tags": ["Teams"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group",
+            "description": "Group number team is part of",
+            "schema": {
+              "type": "number"
+            },
+            "allowReserved": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of teams, empty array if no teams exist",
@@ -95,6 +106,17 @@
       "get": {
         "summary": "Get all matches",
         "tags": ["Matches"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Date of match",
+            "schema": {
+              "type": "string"
+            },
+            "allowReserved": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of Matches, empty array if no teams exist",
