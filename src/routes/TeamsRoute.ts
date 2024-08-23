@@ -12,6 +12,11 @@ export class TeamsRoute {
     teamsRouter.post('/', async (req: Request, res: Response) => this.teamsController.createTeam(req, res));
 
     teamsRouter.post('/shuffle', async (req: Request, res: Response) => this.teamsController.shuffleGroups(req, res));
+
+    teamsRouter.post('/generate-match-plan', async (req: Request, res: Response) =>
+      this.teamsController.generateMatchPlan(req, res)
+    );
+
     return teamsRouter;
   }
 }

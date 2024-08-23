@@ -1,29 +1,29 @@
-import { TeamEntity } from '../repositories/entities/TeamEntity';
+import { GameEntity, TeamEntity } from '../repositories/entities/TeamEntity';
 import { bulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { inject, injectable } from 'inversify';
 import { Group, Team, TeamQueryOptions } from '../models/Team';
-import { scheduleConfig } from '../dummyData';
-import { DateTime } from 'luxon';
+import { MatchScheduleService } from './MatchScheduleService';
 import { groupBy } from 'lodash';
+import { Game, MatchPlan } from '../models/Game';
+
+export enum TeamServiceError {
+  GroupingFailed = 'Could not get groups from database',
+}
 
 export interface ShuffleParameters {
   numberOfGroups: number;
 }
 
-interface Game {
-  number: number;
-  group: number;
-  team: string;
-  opponent: string;
-  slot?: number;
+export interface MatchPlanParameters {
+  numberOfPitches: number;
 }
-
-type MatchPlan = Game[];
-type ScheduledMatchPlan = (Game & { start: string })[];
 
 @injectable()
 export class TeamService {
-  constructor(@inject(TeamRepository) private readonly teamRepository: TeamRepository) {}
+  constructor(
+    @inject(TeamRepository) private readonly teamRepository: TeamRepository,
+    @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService
+  ) {}
 
   public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
     /*
@@ -42,8 +42,12 @@ export class TeamService {
     console.log('Shuffle teams into groups');
     const groups: Group[] = [];
     const teamEntities = await this.teamRepository.findAll();
-    const sliceAt = Math.ceil(teamEntities.length / numberOfGroups);
 
+    if (!teamEntities || teamEntities.length === 0) {
+      throw new Error('Could not get teams from database');
+    }
+
+    const sliceAt = Math.ceil(teamEntities.length / numberOfGroups);
     for (let i = 0; i < numberOfGroups; i++) {
       groups.push({
         number: i + 1,
@@ -52,12 +56,6 @@ export class TeamService {
           .map((teamEntity) => ({ teamId: teamEntity.team_id, name: teamEntity.name })),
       });
     }
-    const matchPlan = this.setupMatchPlan(groups);
-    console.table(matchPlan);
-    const slottedMatchPlan = this.adjustMatchSlots(matchPlan);
-    console.log(slottedMatchPlan);
-    const scheduledMatchPlan = this.scheduleMatches(matchPlan);
-    console.table(scheduledMatchPlan);
 
     const teamsUpdateData: bulkUpdate[] = groups.flatMap((group) =>
       group.teams.map((team) => ({
@@ -67,127 +65,49 @@ export class TeamService {
     );
 
     await this.teamRepository.bulkUpdate(teamsUpdateData);
-
     return groups;
   }
 
-  private setupMatchPlan(groups: Group[]): MatchPlan {
-    const games = groups.flatMap((group) =>
-      group.teams.flatMap((team, index) =>
-        group.teams
-          .slice(index + 1)
-          .map((opponent) => ({ team: team.name, group: group.number, opponent: opponent.name }))
-      )
+  public async generateMatchPlan(): Promise<MatchPlan> {
+    console.log('Generate match plan');
+    const groups = await this.teamRepository.groupByGroupNumber();
+
+    if (groups.length === 0) {
+      throw new Error(TeamServiceError.GroupingFailed);
+    }
+
+    const matchPlan = this.matchScheduleService.setupMatchPlan(
+      groups.map((group) => ({ number: group.number, teams: group.teams.map(this.mapTeamEntityToTeam) }))
     );
-    console.table(games);
 
-    return groups
-      .flatMap((group) =>
-        games
-          .filter((game) => game.group === group.number)
-          .slice(0, group.teams.length - 1)
-          .map((game, index) => ({ ...game, number: 2 * index + 1 }))
-          .concat(
-            games
-              .filter((game) => game.group === group.number)
-              .slice(group.teams.length - 1)
-              .reverse()
-              .map((game, index) => ({ ...game, number: 2 * index + 2 }))
-          )
-      )
-      .sort((a, b) => a.number - b.number);
-  }
+    const homeGames = groups.flatMap((group) =>
+      group.teams.flatMap((team) => matchPlan.filter((game) => game.team.teamId === team.team_id))
+    );
 
-  public adjustMatchSlots(matchPlan: MatchPlan): MatchPlan {
-    console.log('Adjust matchplan');
-    console.log(matchPlan);
-    let slot = 0;
-    const slottedMatchPlan: MatchPlan = matchPlan.map((match, index) => {
-      if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
-        slot++;
-      }
-      return {
-        ...match,
-        slot,
-      };
-    });
+    const groupedHomeGames = groupBy(homeGames, 'team.teamId');
 
-    const swaps = groupBy(this.validateMatchPlan(slottedMatchPlan), 'slot');
-    const slots = Object.keys(swaps);
-    console.log(`Grouped swaps : ${JSON.stringify(swaps)}`);
+    const teamsUpdateData: bulkUpdate[] = Object.entries(groupedHomeGames).map(([teamId, games]) => ({
+      team_id: teamId,
+      updateFields: { games: games.map(this.mapGameToGameEntity) },
+    }));
 
-    const possibleSwaps: { match: Game; swap: Game }[] = [];
-    for (let iSlot = 0; iSlot < slots.length - 1; iSlot++) {
-      for (let iMatch = 0; iMatch < swaps[slots[iSlot]].length; iMatch++) {
-        for (let iSwap = 0; iSwap < swaps[slots[iSlot + 1]].length; iSwap++) {
-          possibleSwaps.push({ match: swaps[slots[iSlot]][iMatch], swap: swaps[slots[iSlot + 1]][iSwap] });
-        }
-      }
-    }
+    await this.teamRepository.bulkUpdate(teamsUpdateData);
 
-    const updateMatchPlan = this.adjust([slottedMatchPlan, slottedMatchPlan], possibleSwaps);
-    console.log(updateMatchPlan);
-    return updateMatchPlan;
-  }
-
-  public adjust(matchPlans: MatchPlan[], possibleSwaps: { match: Game; swap: Game }[]): MatchPlan {
-    const matchPlan = matchPlans[0];
-    const originalMatchPlan = matchPlans[1];
-    if (this.validateMatchPlan(matchPlan).length === 0 || possibleSwaps.length === 0) {
-      return matchPlan;
-    }
-    const possibleSwap = possibleSwaps.pop();
-    if (!possibleSwap) {
-      return matchPlan;
-    }
-    const updatedMatchPlan = this.swapEntries(possibleSwap.match, possibleSwap.swap, [...originalMatchPlan]);
-    return this.adjust([updatedMatchPlan, originalMatchPlan], possibleSwaps);
-  }
-
-  private swapEntries(swapThis: Game, withThat: Game, matchPlan: MatchPlan): MatchPlan {
-    matchPlan[matchPlan.indexOf(swapThis)] = {
-      ...withThat,
-      number: swapThis.number,
-      slot: swapThis.slot,
-    };
-    matchPlan[matchPlan.indexOf(withThat)] = {
-      ...swapThis,
-      number: withThat.number,
-      slot: withThat.slot,
-    };
     return matchPlan;
   }
 
-  private validateMatchPlan(matchPlan: MatchPlan): MatchPlan {
-    return matchPlan.filter((match, index) =>
-      matchPlan.some(
-        (otherMatch, idx) =>
-          otherMatch.slot === match.slot &&
-          (otherMatch.team === match.team ||
-            otherMatch.opponent === match.opponent ||
-            otherMatch.team === match.opponent ||
-            otherMatch.opponent === match.team) &&
-          index !== idx
-      )
-    );
-  }
-
-  private scheduleMatches(matchPlan: MatchPlan): ScheduledMatchPlan {
-    let slot = 0;
-    return matchPlan.map((match, index) => {
-      if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
-        slot++;
-      }
-      return {
-        ...match,
-        start:
-          DateTime.fromISO(scheduleConfig.startTime)
-            .plus({
-              minutes: slot * scheduleConfig.playTime + slot * scheduleConfig.breakBetweenMatches,
-            })
-            .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? '',
-      };
-    });
+  private mapGameToGameEntity(game: Game): GameEntity {
+    return {
+      game_id: game.gameId,
+      start: game.start ?? '',
+      location: game.location ?? '',
+      opponent: game.opponent,
+      number: game.number,
+      group: game.group,
+      slot: game.slot ?? 1,
+      duration_in_minutes: game.durationInMinutes ?? 0,
+      last_modified_at: new Date().toISOString(),
+    };
   }
 
   private mapTeamEntityToTeam(teamEntity: TeamEntity): Team {

@@ -102,6 +102,29 @@
         }
       }
     },
+    "/teams/generate-match-plan": {
+      "post": {
+        "tags": [
+          "Teams"
+        ],
+        "summary": "Generate match plan from groups",
+        "responses": {
+          "200": {
+            "description": "Match plan successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/matchPlan"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
+    },
     "/matches": {
       "get": {
         "summary": "Get all matches",
@@ -441,6 +464,53 @@
           }
         },
         "required": ["numberOfGroups"]
+      },
+      "matchPlan": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/game"
+        }
+      },
+      "game": {
+        "type": "object",
+        "description": "Game with two teams",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "number": {
+            "type": "number"
+          },
+          "group": {
+            "type": "number"
+          },
+          "team": {
+            "type": "object",
+            "properties": {
+              "teamId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "opponent": {
+            "type": "object",
+            "properties": {
+              "teamId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "slot": {
+            "type": "number"
+          }
+        },
+        "required": ["number", "group", "team", "opponent"]
       },
       "group": {
         "type": "object",

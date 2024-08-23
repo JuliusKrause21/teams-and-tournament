@@ -10,7 +10,7 @@ export enum TeamRepositoryError {
 
 export interface bulkUpdate {
   team_id: string | undefined;
-  updateFields: UpdateFilter<TeamEntity>;
+  updateFields: Partial<TeamEntity>;
 }
 
 @injectable()
@@ -23,6 +23,32 @@ export class TeamRepository {
 
   public findAll(filter: Filter<TeamEntity> = {}): Promise<TeamEntity[]> {
     return this.teamCollection.find(filter, { projection: { _id: 0 } }).toArray();
+  }
+
+  public groupByGroupNumber(): Promise<{ number: number; teams: TeamEntity[] }[]> {
+    return this.teamCollection
+      .aggregate<{ number: number; teams: TeamEntity[] }>([
+        {
+          $group: {
+            _id: '$group',
+            teams: {
+              $push: '$$ROOT',
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            number: '$_id',
+            teams: 1,
+          },
+        },
+      ])
+      .toArray();
+  }
+
+  public sortBySlotAndNumber(): Promise<TeamEntity[]> {
+    return this.teamCollection.aggregate<TeamEntity>([{ $sort: { slot: 1 } }, { $sort: { number: 1 } }]).toArray();
   }
 
   public async insert(teamEntity: TeamEntity) {
