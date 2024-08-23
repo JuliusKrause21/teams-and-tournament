@@ -116,7 +116,7 @@ export class TeamService {
     const slots = Object.keys(swaps);
     console.log(`Grouped swaps : ${JSON.stringify(swaps)}`);
 
-    const possibleSwaps = [];
+    const possibleSwaps: { match: Game; swap: Game }[] = [];
     for (let iSlot = 0; iSlot < slots.length - 1; iSlot++) {
       for (let iMatch = 0; iMatch < swaps[slots[iSlot]].length; iMatch++) {
         for (let iSwap = 0; iSwap < swaps[slots[iSlot + 1]].length; iSwap++) {
@@ -125,34 +125,37 @@ export class TeamService {
       }
     }
 
-    console.log(possibleSwaps);
+    const updateMatchPlan = this.adjust([slottedMatchPlan, slottedMatchPlan], possibleSwaps);
+    console.log(updateMatchPlan);
+    return updateMatchPlan;
+  }
 
-    // generate possible swaps
-
-    for (const possibleSwap of possibleSwaps) {
-      const updatedSlots = [...slottedMatchPlan];
-      const matchIndex = updatedSlots.indexOf(possibleSwap.match);
-      const swapIndex = updatedSlots.indexOf(possibleSwap.swap);
-
-      updatedSlots[matchIndex] = {
-        ...possibleSwap.swap,
-        number: possibleSwap.match.number,
-        slot: possibleSwap.match.slot,
-      };
-      updatedSlots[swapIndex] = {
-        ...possibleSwap.match,
-        number: possibleSwap.swap.number,
-        slot: possibleSwap.swap.slot,
-      };
-      console.log(updatedSlots);
-      const nextSwaps = this.validateMatchPlan(updatedSlots);
-      console.log(nextSwaps);
-      if (nextSwaps.length === 0) {
-        console.log('Found adjustment');
-        return updatedSlots;
-      }
+  public adjust(matchPlans: MatchPlan[], possibleSwaps: { match: Game; swap: Game }[]): MatchPlan {
+    const matchPlan = matchPlans[0];
+    const originalMatchPlan = matchPlans[1];
+    if (this.validateMatchPlan(matchPlan).length === 0 || possibleSwaps.length === 0) {
+      return matchPlan;
     }
-    return slottedMatchPlan;
+    const possibleSwap = possibleSwaps.pop();
+    if (!possibleSwap) {
+      return matchPlan;
+    }
+    const updatedMatchPlan = this.swapEntries(possibleSwap.match, possibleSwap.swap, [...originalMatchPlan]);
+    return this.adjust([updatedMatchPlan, originalMatchPlan], possibleSwaps);
+  }
+
+  private swapEntries(swapThis: Game, withThat: Game, matchPlan: MatchPlan): MatchPlan {
+    matchPlan[matchPlan.indexOf(swapThis)] = {
+      ...withThat,
+      number: swapThis.number,
+      slot: swapThis.slot,
+    };
+    matchPlan[matchPlan.indexOf(withThat)] = {
+      ...swapThis,
+      number: withThat.number,
+      slot: withThat.slot,
+    };
+    return matchPlan;
   }
 
   private validateMatchPlan(matchPlan: MatchPlan): MatchPlan {
