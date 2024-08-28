@@ -6,9 +6,11 @@ import { MatchScheduleService } from './MatchScheduleService';
 import { groupBy } from 'lodash';
 import { Game, MatchPlan } from '../models/Game';
 import { MatchDistributionService } from './MatchDistributionService';
+import { MatchValidationService } from './MatchValidationService';
 
 export enum TeamServiceError {
   GroupingFailed = 'Could not get groups from database',
+  ValidationFailed = 'Match plan validation failed',
 }
 
 export interface ShuffleParameters {
@@ -23,9 +25,9 @@ export interface MatchPlanParameters {
 export class TeamService {
   constructor(
     @inject(TeamRepository) private readonly teamRepository: TeamRepository,
-    @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService
     @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService,
     @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService,
+    @inject(MatchValidationService) private readonly matchValidationService: MatchValidationService
   ) {}
 
   public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
@@ -82,6 +84,12 @@ export class TeamService {
     const matchPlan = this.matchScheduleService.setupMatchPlan(
       groups.map((group) => ({ number: group.number, teams: group.teams.map(this.mapTeamEntityToTeam) }))
     );
+
+    // TODO: Test the correct cause of the error on controller level
+    const validation = this.matchValidationService.validateMatchPlan(matchPlan);
+    if (validation.length > 0) {
+      throw new Error(TeamServiceError.ValidationFailed, { cause: validation });
+    }
 
     const homeGames = groups.flatMap((group) =>
       group.teams.flatMap((team) => matchPlan.filter((game) => game.team.teamId === team.team_id))
