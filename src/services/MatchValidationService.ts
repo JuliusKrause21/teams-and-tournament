@@ -40,16 +40,29 @@ export class MatchValidationService {
     return compact(validation);
   }
 
-  // TODO Write Test
-  public listInvalidCombinations(matchPlan: MatchPlan): MatchPlan {
-    return matchPlan.filter((match, index) =>
-      matchPlan.some(
-        (otherMatch, idx) =>
-          otherMatch.slot === match.slot &&
-          (otherMatch.team === match.team ||
-            otherMatch.opponent === match.opponent ||
-            otherMatch.team === match.opponent ||
-            otherMatch.opponent === match.team) &&
+  public validateSlotCombinations(games: Game[], group: number): Validation | undefined {
+    const invalidCombinations = this.listInvalidSlotCombinations(games);
+    if (invalidCombinations.length > 0) {
+      return {
+        message: ValidationMessage.InvalidCombinationsOfGames,
+        group,
+        games: invalidCombinations,
+      };
+    }
+    return undefined;
+  }
+
+  public listInvalidSlotCombinations(games: Game[]): Game[] {
+    return games.filter((game, index) =>
+      games.some(
+        (otherGame, idx) =>
+          otherGame.slot &&
+          game.slot &&
+          otherGame.slot === game.slot &&
+          (otherGame.team.teamId === game.team.teamId ||
+            otherGame.opponent.teamId === game.opponent.teamId ||
+            otherGame.team.teamId === game.opponent.teamId ||
+            otherGame.opponent.teamId === game.team.teamId) &&
           index !== idx
       )
     );
@@ -66,19 +79,6 @@ export class MatchValidationService {
       }
     });
     return uniqWith(validation);
-  }
-
-  // TODO Write Test
-  private validateSlotCombinations(games: Game[], group: number): Validation | undefined {
-    const invalidCombinations = this.listInvalidCombinations(games);
-    if (invalidCombinations.length > 0) {
-      return {
-        message: ValidationMessage.InvalidCombinationsOfGames,
-        group,
-        games: invalidCombinations,
-      };
-    }
-    return undefined;
   }
 
   private validateGamesPerGroup(games: Game[], group: number): Validation | undefined {

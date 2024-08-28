@@ -10,11 +10,12 @@ export const buildTeamEntityFromTeam = (team: Team): TeamEntity =>
 export const buildGameFromTeams = (
   homeTeam: Team,
   awayTeam: Team,
-  { number, group }: { number: number; group: number }
+  { number, group, slot }: { number: number; group: number; slot?: number }
 ): Game => ({
   gameId: uuid(),
   number,
   group,
+  slot,
   team: { teamId: homeTeam.teamId, name: homeTeam.name },
   opponent: { teamId: awayTeam.teamId, name: awayTeam.name },
 });
@@ -47,12 +48,13 @@ export const removeProperty = <T>(obj: T, propertyName: keyof T): Omit<T, keyof 
 
 export const buildMatchCombinations = (
   teams: Team[],
-  combinations: { teamIndex: number; opponentIndex: number; groupNumber: number; gameNumber: number }[]
+  combinations: { teamIndex: number; opponentIndex: number; groupNumber: number; gameNumber: number; slot?: number }[]
 ): MatchPlan =>
-  combinations.map(({ teamIndex, opponentIndex, groupNumber, gameNumber }) =>
+  combinations.map(({ teamIndex, opponentIndex, groupNumber, gameNumber, slot }) =>
     buildGameFromTeams(teams[teamIndex], teams[opponentIndex], {
       number: gameNumber,
       group: groupNumber,
+      slot,
     })
   );
 

@@ -7,13 +7,27 @@ import { MatchValidationService } from './MatchValidationService';
 @injectable()
 export class MatchDistributionService {
   constructor(@inject(MatchValidationService) private readonly matchValidationService: MatchValidationService) {}
-  public distributeMatchSlots(matchPlanWithoutSlots: MatchPlan): MatchPlan {
+  public distributeMatchSlots(matchPlan: MatchPlan): MatchPlan {
     console.log('Distribute match slots');
 
-    // return if matchPlan is already invalid
+    const validation = this.matchValidationService.validateMatchPlan(matchPlan);
+    if (validation.length > 0) {
+      throw new Error('Validation failed', { cause: validation });
+    }
 
+    const matchPlanWithSlots = this.addSlotsToGames(matchPlan);
+    if (this.matchValidationService.validateMatchPlan(matchPlanWithSlots).length === 0) {
+      return matchPlanWithSlots;
+    }
+
+    const possibleSwaps = this.listPossibleSwaps(matchPlanWithSlots);
+
+    return this.adjustSLots(new Array(2).fill(matchPlanWithSlots), possibleSwaps);
+  }
+
+  private addSlotsToGames(matchPlan: MatchPlan): MatchPlan {
     let slot = 0;
-    const matchPlan: MatchPlan = matchPlanWithoutSlots.map((match, index) => {
+    return matchPlan.map((match, index) => {
       if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
         slot++;
       }
@@ -22,20 +36,10 @@ export class MatchDistributionService {
         slot,
       };
     });
-
-    if (this.matchValidationService.listInvalidCombinations(matchPlan).length === 0) {
-      return matchPlan;
-    }
-
-    const possibleSwaps = this.listPossibleSwaps(matchPlan);
-
-    const updateMatchPlan = this.adjustSLots(new Array(2).fill(matchPlan), possibleSwaps);
-    console.log(updateMatchPlan);
-    return updateMatchPlan;
   }
 
   private listPossibleSwaps(matchPlan: MatchPlan): { match: Game; swap: Game }[] {
-    const swaps = groupBy(this.matchValidationService.listInvalidCombinations(matchPlan), 'slot');
+    const swaps = groupBy(this.matchValidationService.listInvalidSlotCombinations(matchPlan), 'slot');
     const slots = Object.keys(swaps);
 
     const possibleSwaps: { match: Game; swap: Game }[] = [];

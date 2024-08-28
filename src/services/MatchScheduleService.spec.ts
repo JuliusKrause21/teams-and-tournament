@@ -52,7 +52,7 @@ describe('MatchScheduleService', () => {
           { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 6 },
         ]);
         const result = matchScheduleService.setupMatchPlan(groups);
-        expect(removePropertyFromAllEntries(result, 'gameId')).toStrictEqual(
+        expect(removePropertyFromAllEntries(result, 'gameId')).toEqual(
           removePropertyFromAllEntries(expectedMatchPlan, 'gameId')
         );
       });
@@ -105,7 +105,7 @@ describe('MatchScheduleService', () => {
         ]);
 
         const result = matchScheduleService.setupMatchPlan(groups);
-        expect(removePropertyFromAllEntries(result, 'gameId')).toStrictEqual(
+        expect(removePropertyFromAllEntries(result, 'gameId')).toEqual(
           removePropertyFromAllEntries(expectedMatchPlan, 'gameId')
         );
       });
