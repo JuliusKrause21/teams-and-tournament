@@ -5,17 +5,25 @@ import { buildGameFromTeams, buildTeamEntityFromTeam, buildUpdateFieldsFromGames
 import { Group } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
+import { MatchDistributionService } from './MatchDistributionService';
 
 describe('TeamService', () => {
   let teamRepository: TeamRepository;
   let teamService: TeamService;
   let matchScheduleService: MatchScheduleService;
+  let matchDistributionService: MatchDistributionService;
   const teamEntities = teams.map(buildTeamEntityFromTeam);
 
   beforeEach(() => {
     teamRepository = mock(TeamRepository);
     matchScheduleService = mock(MatchScheduleService);
     teamService = new TeamService(instance(teamRepository), instance(matchScheduleService));
+    matchDistributionService = mock(MatchDistributionService);
+    teamService = new TeamService(
+      instance(teamRepository),
+      instance(matchScheduleService),
+      instance(matchDistributionService),
+    );
   });
 
   describe('listTeams', () => {

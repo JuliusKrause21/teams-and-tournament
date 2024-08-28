@@ -5,6 +5,7 @@ import { Group, Team, TeamQueryOptions } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
 import { groupBy } from 'lodash';
 import { Game, MatchPlan } from '../models/Game';
+import { MatchDistributionService } from './MatchDistributionService';
 
 export enum TeamServiceError {
   GroupingFailed = 'Could not get groups from database',
@@ -23,6 +24,8 @@ export class TeamService {
   constructor(
     @inject(TeamRepository) private readonly teamRepository: TeamRepository,
     @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService
+    @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService,
+    @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService,
   ) {}
 
   public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
@@ -94,6 +97,27 @@ export class TeamService {
     await this.teamRepository.bulkUpdate(teamsUpdateData);
 
     return matchPlan;
+  }
+
+  public async scheduleMatches(): Promise<MatchPlan> {
+    const teamEntities = await this.teamRepository.sortBySlotAndNumber();
+    const matchPlan: MatchPlan = teamEntities.flatMap((teamEntity) =>
+      (teamEntity.games ?? []).map((game) => ({
+        gameId: game.game_id,
+        location: game.location,
+        number: game.number,
+        group: game.group ?? 1,
+        team: { teamId: teamEntity.team_id, name: teamEntity.name },
+        opponent: game.opponent,
+      }))
+    );
+
+    if (matchPlan.length === 0) {
+      return matchPlan;
+    }
+
+    const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(matchPlan);
+    return this.matchScheduleService.scheduleMatches(distributedMatchPlan);
   }
 
   private mapGameToGameEntity(game: Game): GameEntity {

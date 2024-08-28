@@ -17,6 +17,7 @@ import { TasksController } from './controllers/TasksController';
 import { TasksRoute } from './routes/TasksRoute';
 import { NuLigaFacade } from './facades/NuLigaFacade';
 import { MatchScheduleService } from './services/MatchScheduleService';
+import { MatchDistributionService } from './services/MatchDistributionService';
 
 export const container = new Container();
 
@@ -42,6 +43,7 @@ container.bind<TeamService>(TeamService).toSelf().inSingletonScope();
 container.bind<MatchesService>(MatchesService).toSelf().inSingletonScope();
 container.bind<TasksService>(TasksService).toSelf().inSingletonScope();
 container.bind<MatchScheduleService>(MatchScheduleService).toSelf().inSingletonScope();
+container.bind<MatchDistributionService>(MatchDistributionService).toSelf().inSingletonScope();
 
 // controllers
 container.bind<TeamsController>(TeamsController).toSelf().inSingletonScope();

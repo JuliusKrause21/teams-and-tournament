@@ -1,5 +1,7 @@
 import { injectable } from 'inversify';
 import { Group } from '../models/Team';
+import { scheduleConfig } from '../dummyData';
+import { DateTime } from 'luxon';
 import { Game, MatchPlan } from '../models/Game';
 import { v4 as uuid } from 'uuid';
 
@@ -41,5 +43,23 @@ export class MatchScheduleService {
           )
       )
       .sort((a, b) => a.number - b.number);
+  }
+
+  public scheduleMatches(matchPlan: MatchPlan): MatchPlan {
+    let slot = 0;
+    return matchPlan.map((match, index) => {
+      if (index > 0 && index % scheduleConfig.numberOfPitches === 0) {
+        slot++;
+      }
+      return {
+        ...match,
+        start:
+          DateTime.fromISO(scheduleConfig.startTime)
+            .plus({
+              minutes: slot * scheduleConfig.playTime + slot * scheduleConfig.breakBetweenMatches,
+            })
+            .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? '',
+      };
+    });
   }
 }
