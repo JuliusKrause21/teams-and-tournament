@@ -78,5 +78,5 @@ export const scheduleConfig = {
   startTime: '2024-08-22T10:00:00.000Z',
   playTime: 25,
   breakBetweenMatches: 5,
-  numberOfPitches: 3,
+  numberOfPitches: 1,
 };

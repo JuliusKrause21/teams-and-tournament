@@ -34,13 +34,21 @@ export class MatchValidationService {
       validation.push(this.validateUniqueGameCombinations(games, index + 1));
       validation.push(...this.validateTeamIdsInGames(games, index + 1));
       validation.push(this.validateGamesPerGroup(games, index + 1));
-      validation.push(this.validateSlotCombinations(games, index + 1));
+      validation.push(this.validateSlotCombinationsPerGroup(games, index + 1));
     });
 
     return compact(validation);
   }
 
-  public validateSlotCombinations(games: Game[], group: number): Validation | undefined {
+  public validateSlotCombinations(matchPlan: MatchPlan): boolean {
+    const groups = groupBy(matchPlan, 'group');
+    return (
+      compact(Object.values(groups).map((games, index) => this.validateSlotCombinationsPerGroup(games, index)))
+        .length === 0
+    );
+  }
+
+  private validateSlotCombinationsPerGroup(games: Game[], group: number): Validation | undefined {
     const invalidCombinations = this.listInvalidSlotCombinations(games);
     if (invalidCombinations.length > 0) {
       return {

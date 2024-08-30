@@ -7,6 +7,7 @@ import { groupBy } from 'lodash';
 import { Game, MatchPlan } from '../models/Game';
 import { MatchDistributionService } from './MatchDistributionService';
 import { MatchValidationService } from './MatchValidationService';
+import { scheduleConfig } from '../dummyData';
 
 export enum TeamServiceError {
   GroupingFailed = 'Could not get groups from database',
@@ -124,7 +125,10 @@ export class TeamService {
       return matchPlan;
     }
 
-    const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(matchPlan);
+    const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
+      matchPlan,
+      scheduleConfig.numberOfPitches
+    );
     return this.matchScheduleService.scheduleMatches(distributedMatchPlan);
   }
 

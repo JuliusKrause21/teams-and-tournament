@@ -153,7 +153,6 @@ describe('MatchValidationService', () => {
       expect(result).toStrictEqual(expectedValidation);
     });
   });
-
   describe('listInvalidCombinations', () => {
     test('to list no combinations if teams occupy a slot only once', () => {
       const matchPlan = buildMatchCombinations(buildRandomTeams(3), [
@@ -206,8 +205,8 @@ describe('MatchValidationService', () => {
         { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2, slot: 2 },
         { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3, slot: 3 },
       ]);
-      const result = matchValidationService.validateSlotCombinations(matchPlan, 1);
-      expect(result).toEqual(undefined);
+      const result = matchValidationService.validateSlotCombinations(matchPlan);
+      expect(result).toEqual(true);
     });
 
     test('to invalidate slot combinations if a slot is occupied by more than one team', () => {
@@ -216,14 +215,10 @@ describe('MatchValidationService', () => {
         { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2, slot: 2 },
         { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3, slot: 1 },
       ]);
-      const expectedValidation: Validation = {
-        message: ValidationMessage.InvalidCombinationsOfGames,
-        group: 1,
-        games: [matchPlan[0], matchPlan[2]],
-      };
-      const result = matchValidationService.validateSlotCombinations(matchPlan, 1);
 
-      expect(result).toStrictEqual(expectedValidation);
+      const result = matchValidationService.validateSlotCombinations(matchPlan);
+
+      expect(result).toStrictEqual(false);
     });
   });
 });
