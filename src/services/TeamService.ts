@@ -18,10 +18,6 @@ export interface ShuffleParameters {
   numberOfGroups: number;
 }
 
-export interface MatchPlanParameters {
-  numberOfPitches: number;
-}
-
 @injectable()
 export class TeamService {
   constructor(
@@ -82,7 +78,7 @@ export class TeamService {
       throw new Error(TeamServiceError.GroupingFailed);
     }
 
-    const matchPlan = this.matchScheduleService.setupMatchPlan(
+    const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
       groups.map((group) => ({ number: group.number, teams: group.teams.map(this.mapTeamEntityToTeam) }))
     );
 
@@ -97,7 +93,6 @@ export class TeamService {
     );
 
     const groupedHomeGames = groupBy(homeGames, 'team.teamId');
-
     const teamsUpdateData: bulkUpdate[] = Object.entries(groupedHomeGames).map(([teamId, games]) => ({
       team_id: teamId,
       updateFields: { games: games.map(this.mapGameToGameEntity) },

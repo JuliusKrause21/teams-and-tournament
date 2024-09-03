@@ -137,7 +137,7 @@ describe('TeamService', () => {
 
       when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
       when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
-      when(matchScheduleService.setupMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
       const result = await teamService.generateMatchPlan();
 
       expect(result).toStrictEqual(matchPlan);
@@ -168,7 +168,7 @@ describe('TeamService', () => {
         { number: 2, teams: teamsInGroupTwo },
       ]);
       when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
-      when(matchScheduleService.setupMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
       const result = await teamService.generateMatchPlan();
 
       expect(result).toStrictEqual(matchPlan);

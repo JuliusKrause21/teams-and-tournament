@@ -74,6 +74,17 @@ export const buildRandomTeams = (numberOfTeams: number): Team[] => {
   return teams;
 };
 
+export const buildRandomMatchPlan = (teams: Team[]): MatchPlan => {
+  const matchPlan: MatchPlan = [];
+  let gameIndex = 1;
+  for (let iTeam = 0; iTeam < teams.length; iTeam++) {
+    for (let iOpponent = iTeam + 1; iOpponent < teams.length; iOpponent++) {
+      matchPlan.push({ gameId: uuid(), number: gameIndex++, team: teams[iTeam], opponent: teams[iOpponent], group: 1 });
+    }
+  }
+  return matchPlan;
+};
+
 export const teams: Team[] = [
   { name: 'one', teamId: '62eec995-bda0-47df-86cb-d412b25a8d03' },
   { name: 'two', teamId: '0272aa8a-3eca-41d8-9bbf-f165c34ab276' },
@@ -120,10 +131,7 @@ export const initialMatchCombinationsWithSlots: Record<number, Record<number, Co
   0: {},
   1: {},
   2: {
-    1: [
-      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1, slot: 1 },
-      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2, slot: 2 },
-    ],
+    1: [{ teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1, slot: 1 }],
   },
   3: {
     1: [
@@ -166,114 +174,33 @@ export const initialMatchCombinationsWithSlots: Record<number, Record<number, Co
     2: [
       { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1, slot: 1 },
       { teamIndex: 3, opponentIndex: 4, groupNumber: 1, gameNumber: 2, slot: 1 },
-
       { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3, slot: 2 },
       { teamIndex: 1, opponentIndex: 4, groupNumber: 1, gameNumber: 8, slot: 2 },
-
       { teamIndex: 2, opponentIndex: 4, groupNumber: 1, gameNumber: 4, slot: 3 },
       { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 10, slot: 3 },
-
       { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 6, slot: 4 },
       { teamIndex: 0, opponentIndex: 4, groupNumber: 1, gameNumber: 7, slot: 4 },
-
       { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 9, slot: 5 },
       { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5, slot: 5 },
     ],
   },
+  6: {
+    1: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
+      { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5 },
+      { teamIndex: 0, opponentIndex: 4, groupNumber: 1, gameNumber: 7 },
+      { teamIndex: 0, opponentIndex: 5, groupNumber: 1, gameNumber: 9 },
+      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 11 },
+      { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 13 },
+      { teamIndex: 1, opponentIndex: 4, groupNumber: 1, gameNumber: 15 },
+      { teamIndex: 1, opponentIndex: 5, groupNumber: 1, gameNumber: 14 },
+      { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 12 },
+      { teamIndex: 2, opponentIndex: 4, groupNumber: 1, gameNumber: 10 },
+      { teamIndex: 2, opponentIndex: 5, groupNumber: 1, gameNumber: 8 },
+      { teamIndex: 3, opponentIndex: 4, groupNumber: 1, gameNumber: 6 },
+      { teamIndex: 3, opponentIndex: 5, groupNumber: 1, gameNumber: 4 },
+      { teamIndex: 4, opponentIndex: 5, groupNumber: 1, gameNumber: 2 },
+    ],
+  },
 };
-
-// push [
-// game: 1, slot: 1
-// ]
-// filter ids in slot and check if equal in game
-// [0,1], [3,4]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// ]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// ]
-// filter ids in slot and check if equal in game
-// [0,2], [2,4]
-// [0,2], [0,3]
-// [0,2], [2,3]
-// [0,2], [0,4]
-// [0,2], [1,4] --> mark skipped!!
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// ]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// ]
-// filter ids in slot and check if equal in game
-// [2,4], [0,3]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// game: 5, slot: 3
-// ]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// game: 5, slot: 3
-// game: 6, slot: 4
-// ]
-// filter ids in slot and check if equal in game
-// [2,3], [0,4]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// game: 5, slot: 3
-// game: 6, slot: 4
-// game: 7, slot: 4
-// ]
-// push [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// game: 5, slot: 3
-// game: 6, slot: 4
-// game: 7, slot: 4
-// game: 9, slot: 5
-// ]
-// filter ids in slot and check if equal in game
-// [1,2], [1,3]
-// find possible slot for [2,3]
-// filter ids in slot and check if equal in swap possible
-// slot 5: [1,2]
-// slot 1: [[0,1],[3,4]] --> NO
-// slot 2:
-
-// swap [
-// game: 1, slot: 1
-// game: 2, slot: 1
-// game: 3, slot: 2
-// game: 8, slot: 2
-// game: 4, slot: 3
-// game: 5, slot: 3
-// game: 6, slot: 4
-// game: 7, slot: 4
-// game: 9, slot: 5
-// game: 10, slot: 5
-// ]
