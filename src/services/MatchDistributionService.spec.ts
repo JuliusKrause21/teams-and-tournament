@@ -1,5 +1,5 @@
 import { MatchDistributionService } from './MatchDistributionService';
-import { MatchValidationService } from './MatchValidationService';
+import { MatchValidationService, ValidationMessage } from './MatchValidationService';
 import { anything, instance, mock, when } from 'ts-mockito';
 import {
   buildGroupFromTeams,
@@ -124,13 +124,16 @@ describe('MatchDistributionService', () => {
   });
 
   describe('distributeMatchSlots', () => {
-    /*test('to throw an error if match plan is already invalid', () => {
+    test('to throw an error if match plan is already invalid', () => {
       const invalidMatchPlan: MatchPlan = [];
       when(matchValidationService.validateMatchPlan(anything())).thenReturn([
         { message: ValidationMessage.EmptyMatchPlan, games: [] },
       ]);
-      expect(matchDistributionService.distributeMatchSlots(invalidMatchPlan, anything())).toThrow('Validation failed');
-    });*/
+      expect(() => matchDistributionService.distributeMatchSlots(invalidMatchPlan, anything())).toThrow(
+        'Validation failed'
+      );
+    });
+
     test('to distribute games correctly with one pitch to play ', () => {
       const teams = buildRandomTeams(3);
       const matchPlan = buildMatchCombinations(teams, [
