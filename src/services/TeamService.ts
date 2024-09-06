@@ -6,7 +6,6 @@ import { MatchScheduleService } from './MatchScheduleService';
 import { groupBy } from 'lodash';
 import { Game, MatchPlan } from '../models/Game';
 import { MatchDistributionService } from './MatchDistributionService';
-import { MatchValidationService } from './MatchValidationService';
 import { scheduleConfig } from '../dummyData';
 
 export enum TeamServiceError {
@@ -23,8 +22,7 @@ export class TeamService {
   constructor(
     @inject(TeamRepository) private readonly teamRepository: TeamRepository,
     @inject(MatchScheduleService) private readonly matchScheduleService: MatchScheduleService,
-    @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService,
-    @inject(MatchValidationService) private readonly matchValidationService: MatchValidationService
+    @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService
   ) {}
 
   public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
@@ -81,12 +79,6 @@ export class TeamService {
     const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
       groups.map((group) => ({ number: group.number, teams: group.teams.map(this.mapTeamEntityToTeam) }))
     );
-
-    // TODO: Test the correct cause of the error on controller level
-    const validation = this.matchValidationService.validateMatchPlan(matchPlan);
-    if (validation.length > 0) {
-      throw new Error(TeamServiceError.ValidationFailed, { cause: validation });
-    }
 
     const homeGames = groups.flatMap((group) =>
       group.teams.flatMap((team) => matchPlan.filter((game) => game.team.teamId === team.team_id))

@@ -1,37 +1,29 @@
 import { TeamRepository } from '../repositories/TeamRepository';
 import { anything, deepEqual, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { TeamService, TeamServiceError } from './TeamService';
-import {
-  buildGameFromTeams,
-  buildMatchCombinations,
-  buildTeamEntityFromTeam,
-  buildUpdateFieldsFromGames,
-  teams,
-} from '../testData';
+import { buildGameFromTeams, buildTeamEntityFromTeam, buildUpdateFieldsFromGames, teams } from '../testData';
 import { Group } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { MatchDistributionService } from './MatchDistributionService';
-import { MatchValidationService, ValidationMessage } from './MatchValidationService';
 
 describe('TeamService', () => {
   let teamRepository: TeamRepository;
   let teamService: TeamService;
   let matchScheduleService: MatchScheduleService;
   let matchDistributionService: MatchDistributionService;
-  let matchValidationService: MatchValidationService;
+
   const teamEntities = teams.map(buildTeamEntityFromTeam);
 
   beforeEach(() => {
     teamRepository = mock(TeamRepository);
     matchScheduleService = mock(MatchScheduleService);
     matchDistributionService = mock(MatchDistributionService);
-    matchValidationService = mock(MatchValidationService);
+
     teamService = new TeamService(
       instance(teamRepository),
       instance(matchScheduleService),
-      instance(matchDistributionService),
-      instance(matchValidationService)
+      instance(matchDistributionService)
     );
   });
 
@@ -118,25 +110,10 @@ describe('TeamService', () => {
       expect(teamService.generateMatchPlan()).rejects.toThrow(TeamServiceError.GroupingFailed);
     });
 
-    test('to throw an error if match plan validation fails', () => {
-      const matchPlan = buildMatchCombinations(teamsInGroupOne, [
-        { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
-        { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2 },
-        { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
-      ]);
-      when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
-      when(matchScheduleService.scheduleMatches(anything())).thenReturn(matchPlan);
-      when(matchValidationService.validateMatchPlan(anything())).thenReturn([
-        { message: ValidationMessage.InvalidCombinationOfTeams, group: 1, games: [matchPlan[1], matchPlan[2]] },
-      ]);
-      expect(teamService.generateMatchPlan()).rejects.toThrow(TeamServiceError.ValidationFailed);
-    });
-
     test('to setup initial match plan for one group and update team entities', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
       when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
-      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
       const result = await teamService.generateMatchPlan();
 
@@ -167,7 +144,6 @@ describe('TeamService', () => {
         { number: 1, teams: teamsInGroupOne },
         { number: 2, teams: teamsInGroupTwo },
       ]);
-      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
       const result = await teamService.generateMatchPlan();
 
