@@ -3,7 +3,7 @@ import { bulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { inject, injectable } from 'inversify';
 import { Group, Team, TeamQueryOptions } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
-import { groupBy } from 'lodash';
+import { groupBy, shuffle } from 'lodash';
 import { Game, MatchPlan } from '../models/Game';
 import { MatchDistributionService } from './MatchDistributionService';
 import { scheduleConfig } from '../dummyData';
@@ -46,12 +46,12 @@ export class TeamService {
     if (!teamEntities || teamEntities.length === 0) {
       throw new Error('Could not get teams from database');
     }
-
-    const sliceAt = Math.ceil(teamEntities.length / numberOfGroups);
+    const shuffledTeamEntities = shuffle(teamEntities);
+    const sliceAt = Math.ceil(shuffledTeamEntities.length / numberOfGroups);
     for (let i = 0; i < numberOfGroups; i++) {
       groups.push({
         number: i + 1,
-        teams: teamEntities
+        teams: shuffledTeamEntities
           .slice(i * sliceAt, (i + 1) * sliceAt)
           .map((teamEntity) => ({ teamId: teamEntity.team_id, name: teamEntity.name })),
       });

@@ -2,7 +2,6 @@ import { TeamRepository } from '../repositories/TeamRepository';
 import { anything, deepEqual, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { TeamService, TeamServiceError } from './TeamService';
 import { buildGameFromTeams, buildTeamEntityFromTeam, buildUpdateFieldsFromGames, teams } from '../testData';
-import { Group } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { MatchDistributionService } from './MatchDistributionService';
@@ -53,32 +52,24 @@ describe('TeamService', () => {
       const numberOfGroups = 1;
       when(teamRepository.findAll()).thenResolve(teamEntities);
       const result = await teamService.shuffleGroups({ numberOfGroups });
-      expect(result).toEqual([{ number: 1, teams: teams }]);
+      expect(result.length).toEqual(1);
+      expect(result.every((group) => group.teams.length === teams.length)).toBe(true);
     });
 
     test('to split teams into two groups if desired number of groups equals two', async () => {
-      const expectedGroups: Group[] = [
-        { number: 1, teams: teams.slice(0, 4) },
-        { number: 2, teams: teams.slice(4) },
-      ];
       const numberOfGroups = 2;
       when(teamRepository.findAll()).thenResolve(teamEntities);
       const result = await teamService.shuffleGroups({ numberOfGroups });
       expect(result.length).toBe(2);
-      expect(result).toStrictEqual(expectedGroups);
+      expect(result.every((group) => group.teams.length === 4)).toBe(true);
     });
 
     test('to split teams into three groups with remainder if desired number of groups equals three', async () => {
-      const expectedGroups: Group[] = [
-        { number: 1, teams: teams.slice(0, 3) },
-        { number: 2, teams: teams.slice(3, 6) },
-        { number: 3, teams: teams.slice(6) },
-      ];
       const numberOfGroups = 3;
       when(teamRepository.findAll()).thenResolve(teamEntities);
       const result = await teamService.shuffleGroups({ numberOfGroups });
       expect(result.length).toBe(3);
-      expect(result).toStrictEqual(expectedGroups);
+      expect(result.every((group) => group.teams.length <= 3)).toBe(true);
     });
   });
 
