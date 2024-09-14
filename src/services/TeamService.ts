@@ -70,10 +70,10 @@ export class TeamService {
 
   public async generateMatchPlan(): Promise<MatchPlan> {
     console.log('Generate match plan');
-    const groups = await this.teamRepository.groupByGroupNumber();
+    let groups = await this.teamRepository.groupByGroupNumber();
 
     if (groups.length === 0) {
-      throw new Error(TeamServiceError.GroupingFailed);
+      groups = await this.shuffleGroups({ numberOfGroups: 1 });
     }
 
     const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
