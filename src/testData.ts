@@ -96,35 +96,51 @@ export const teams: Team[] = [
   { name: 'eight', teamId: '6b9890de-7979-4713-a0ed-b385baa275c0' },
 ];
 
-export const initialMatchCombinations: Record<number, Combination[]> = {
+export const initialMatchCombinations: Record<number, Record<number, Combination[]>> = {
   0: [],
   1: [],
-  2: [{ teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 }],
-  3: [
-    { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
-    { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2 },
-    { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
-  ],
-  4: [
-    { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
-    { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 2 },
-    { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
-    { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 4 },
-    { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5 },
-    { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 6 },
-  ],
-  5: [
-    { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
-    { teamIndex: 3, opponentIndex: 4, groupNumber: 1, gameNumber: 2 },
-    { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
-    { teamIndex: 2, opponentIndex: 4, groupNumber: 1, gameNumber: 4 },
-    { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5 },
-    { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 6 },
-    { teamIndex: 0, opponentIndex: 4, groupNumber: 1, gameNumber: 7 },
-    { teamIndex: 1, opponentIndex: 4, groupNumber: 1, gameNumber: 8 },
-    { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 9 },
-    { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 10 },
-  ],
+  2: { 1: [{ teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 }] },
+  3: {
+    1: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 2 },
+      { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
+    ],
+  },
+  4: {
+    1: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 2 },
+      { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
+      { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 4 },
+      { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5 },
+      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 6 },
+    ],
+    2: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 2, opponentIndex: 3, groupNumber: 2, gameNumber: 2 },
+    ],
+  },
+  5: {
+    1: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 3, opponentIndex: 4, groupNumber: 1, gameNumber: 2 },
+      { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
+      { teamIndex: 2, opponentIndex: 4, groupNumber: 1, gameNumber: 4 },
+      { teamIndex: 0, opponentIndex: 3, groupNumber: 1, gameNumber: 5 },
+      { teamIndex: 2, opponentIndex: 3, groupNumber: 1, gameNumber: 6 },
+      { teamIndex: 0, opponentIndex: 4, groupNumber: 1, gameNumber: 7 },
+      { teamIndex: 1, opponentIndex: 4, groupNumber: 1, gameNumber: 8 },
+      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 9 },
+      { teamIndex: 1, opponentIndex: 3, groupNumber: 1, gameNumber: 10 },
+    ],
+    2: [
+      { teamIndex: 0, opponentIndex: 1, groupNumber: 1, gameNumber: 1 },
+      { teamIndex: 3, opponentIndex: 4, groupNumber: 2, gameNumber: 2 },
+      { teamIndex: 0, opponentIndex: 2, groupNumber: 1, gameNumber: 3 },
+      { teamIndex: 1, opponentIndex: 2, groupNumber: 1, gameNumber: 4 },
+    ],
+  },
 };
 
 export const initialMatchCombinationsWithSlots: Record<number, Record<number, Combination[]>> = {
