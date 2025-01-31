@@ -2,28 +2,24 @@ import { TeamRepository } from '../repositories/TeamRepository';
 import { anything, deepEqual, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { TeamService, TeamServiceError } from './TeamService';
 import { buildGameFromTeams, buildTeamEntityFromTeam, buildUpdateFieldsFromGames, teams } from '../testData';
-import { MatchScheduleService } from './MatchScheduleService';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { MatchDistributionService } from './MatchDistributionService';
+import { GameService } from './GameService';
 
 describe('TeamService', () => {
   let teamRepository: TeamRepository;
   let teamService: TeamService;
-  let matchScheduleService: MatchScheduleService;
   let matchDistributionService: MatchDistributionService;
+  let gameService: GameService;
 
   const teamEntities = teams.map(buildTeamEntityFromTeam);
 
   beforeEach(() => {
     teamRepository = mock(TeamRepository);
-    matchScheduleService = mock(MatchScheduleService);
+    gameService = mock(GameService);
     matchDistributionService = mock(MatchDistributionService);
 
-    teamService = new TeamService(
-      instance(teamRepository),
-      instance(matchScheduleService),
-      instance(matchDistributionService)
-    );
+    teamService = new TeamService(instance(teamRepository), instance(gameService), instance(matchDistributionService));
   });
 
   describe('listTeams', () => {
@@ -74,14 +70,6 @@ describe('TeamService', () => {
   });
 
   describe('generateMatchPlan', () => {
-    const mockedLastModified = '2000-01-01T00:00:00.000Z';
-    beforeEach(() => {
-      jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockedLastModified);
-    });
-
-    afterEach(() => {
-      jest.resetAllMocks();
-    });
     const teamsInGroupOne: TeamEntity[] = [
       buildTeamEntityFromTeam(teams[0]),
       buildTeamEntityFromTeam(teams[1]),
@@ -93,12 +81,14 @@ describe('TeamService', () => {
     const gameOneThree = buildGameFromTeams(teams[0], teams[2], { group: 1, number: 3 });
 
     const expectedUpdateFields = [
-      buildUpdateFieldsFromGames(teams[0], [gameOneOne, gameOneThree], mockedLastModified),
-      buildUpdateFieldsFromGames(teams[1], [gameOneTwo], mockedLastModified),
+      buildUpdateFieldsFromGames(teams[0], [gameOneOne, gameOneThree]),
+      buildUpdateFieldsFromGames(teams[1], [gameOneTwo]),
     ];
-    test('to throw an error if no groups could be found', () => {
+
+    test('to throw an error if no groups could be found and no teams available', () => {
       when(teamRepository.groupByGroupNumber()).thenResolve([]);
-      expect(teamService.generateMatchPlan()).rejects.toThrow(TeamServiceError.GroupingFailed);
+      when(teamRepository.findAll()).thenResolve([]);
+      expect(teamService.generateMatchPlan()).rejects.toThrow(TeamServiceError.NoTeamsFound);
     });
 
     test('to setup initial match plan for one group and update team entities', async () => {
@@ -127,8 +117,8 @@ describe('TeamService', () => {
 
       const expectedUpdateFieldsTotal = [
         ...expectedUpdateFields,
-        buildUpdateFieldsFromGames(teams[3], [gameTwoOne, gameTwoThree], mockedLastModified),
-        buildUpdateFieldsFromGames(teams[4], [gameTwoTwo], mockedLastModified),
+        buildUpdateFieldsFromGames(teams[3], [gameTwoOne, gameTwoThree]),
+        buildUpdateFieldsFromGames(teams[4], [gameTwoTwo]),
       ];
 
       when(teamRepository.groupByGroupNumber()).thenResolve([

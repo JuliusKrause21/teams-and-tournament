@@ -19,6 +19,8 @@ import { NuLigaFacade } from './facades/NuLigaFacade';
 import { MatchScheduleService } from './services/MatchScheduleService';
 import { MatchDistributionService } from './services/MatchDistributionService';
 import { MatchValidationService } from './services/MatchValidationService';
+import { GameService } from './services/GameService';
+import { GameRepository } from './repositories/GameRepository';
 
 export const container = new Container();
 
@@ -35,6 +37,7 @@ container.bind<Server>(Server).toSelf().inSingletonScope();
 container.bind<TeamRepository>(TeamRepository).toSelf().inSingletonScope();
 container.bind<MatchRepository>(MatchRepository).toSelf().inSingletonScope();
 container.bind<TaskRepository>(TaskRepository).toSelf().inSingletonScope();
+container.bind<GameRepository>(GameRepository).toSelf().inSingletonScope();
 
 // facades
 container.bind<NuLigaFacade>(NuLigaFacade).toSelf().inSingletonScope();
@@ -46,6 +49,7 @@ container.bind<TasksService>(TasksService).toSelf().inSingletonScope();
 container.bind<MatchScheduleService>(MatchScheduleService).toSelf().inSingletonScope();
 container.bind<MatchDistributionService>(MatchDistributionService).toSelf().inSingletonScope();
 container.bind<MatchValidationService>(MatchValidationService).toSelf().inSingletonScope();
+container.bind<GameService>(GameService).toSelf().inSingletonScope();
 
 // controllers
 container.bind<TeamsController>(TeamsController).toSelf().inSingletonScope();

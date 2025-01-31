@@ -28,20 +28,10 @@ export const buildGameFromTeams = (
   opponent: { teamId: awayTeam.teamId, name: awayTeam.name },
 });
 
-export const buildUpdateFieldsFromGames = (team: Team, games: Game[], mockedDate?: string): BulkUpdate => ({
+export const buildUpdateFieldsFromGames = (team: Team, games: Game[]): BulkUpdate => ({
   team_id: team.teamId,
   updateFields: {
-    games: games.map((game) => ({
-      game_id: game.gameId,
-      opponent: game.opponent,
-      location: '',
-      group: game.group,
-      start: '',
-      duration_in_minutes: 0,
-      number: game.number,
-      last_modified_at: mockedDate ?? new Date().toISOString(),
-      slot: 1,
-    })),
+    games: games.map((game) => game.gameId),
   },
 });
 
