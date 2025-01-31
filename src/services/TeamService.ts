@@ -1,5 +1,5 @@
 import { GameEntity, TeamEntity } from '../repositories/entities/TeamEntity';
-import { bulkUpdate, TeamRepository } from '../repositories/TeamRepository';
+import { BulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { inject, injectable } from 'inversify';
 import { Group, Team, TeamQueryOptions } from '../models/Team';
 import { MatchScheduleService } from './MatchScheduleService';
@@ -57,7 +57,7 @@ export class TeamService {
       });
     }
 
-    const teamsUpdateData: bulkUpdate[] = groups.flatMap((group) =>
+    const teamsUpdateData: BulkUpdate[] = groups.flatMap((group) =>
       group.teams.map((team) => ({
         team_id: team.teamId,
         updateFields: { group: group.number },
@@ -85,7 +85,7 @@ export class TeamService {
     );
 
     const groupedHomeGames = groupBy(homeGames, 'team.teamId');
-    const teamsUpdateData: bulkUpdate[] = Object.entries(groupedHomeGames).map(([teamId, games]) => ({
+    const teamsUpdateData: BulkUpdate[] = Object.entries(groupedHomeGames).map(([teamId, games]) => ({
       team_id: teamId,
       updateFields: { games: games.map(this.mapGameToGameEntity) },
     }));

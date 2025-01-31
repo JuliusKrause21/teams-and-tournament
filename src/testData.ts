@@ -2,7 +2,7 @@ import { TeamEntity } from './repositories/entities/TeamEntity';
 import { Group, Team } from './models/Team';
 import { Game, MatchPlan } from './models/Game';
 import { v4 as uuid } from 'uuid';
-import { bulkUpdate } from './repositories/TeamRepository';
+import { BulkUpdate } from './repositories/TeamRepository';
 
 interface Combination {
   teamIndex: number;
@@ -28,7 +28,7 @@ export const buildGameFromTeams = (
   opponent: { teamId: awayTeam.teamId, name: awayTeam.name },
 });
 
-export const buildUpdateFieldsFromGames = (team: Team, games: Game[], mockedDate?: string): bulkUpdate => ({
+export const buildUpdateFieldsFromGames = (team: Team, games: Game[], mockedDate?: string): BulkUpdate => ({
   team_id: team.teamId,
   updateFields: {
     games: games.map((game) => ({

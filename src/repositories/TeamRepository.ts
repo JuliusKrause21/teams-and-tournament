@@ -8,7 +8,7 @@ export enum TeamRepositoryError {
   UpdateAcknowledgeFailed = 'Update team was not acknowledged',
 }
 
-export interface bulkUpdate {
+export interface BulkUpdate {
   team_id: string | undefined;
   updateFields: Partial<TeamEntity>;
 }
@@ -66,7 +66,7 @@ export class TeamRepository {
     }
   }
 
-  public async bulkUpdate(bulkData: bulkUpdate[]): Promise<void> {
+  public async bulkUpdate(bulkData: BulkUpdate[]): Promise<void> {
     console.log('Bulk update teams');
     const operations = bulkData.map((data) => ({
       updateOne: {
