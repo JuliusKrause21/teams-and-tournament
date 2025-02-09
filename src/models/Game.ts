@@ -3,7 +3,7 @@
 
 import { Team } from './Team';
 
-export type TeamInfo = Pick<Team, 'teamId' | 'name'>;
+export type TeamInfo = Required<Pick<Team, 'name' | 'teamId'>>;
 
 export interface Game {
   gameId: string;

@@ -6,7 +6,7 @@ import { Group, Team } from '../models/Team';
 import { v4 as uuid } from 'uuid';
 
 type UsedIdsOfSlot = { slot: number; ids: string[] };
-type BaseGame = Omit<Game, 'number' | 'group'>;
+type BaseGame = Pick<Game, 'gameId' | 'team' | 'opponent'>;
 
 @injectable()
 export class MatchDistributionService {
@@ -50,9 +50,11 @@ export class MatchDistributionService {
 
   private generateGames(teams: Team[]): BaseGame[] {
     return teams.flatMap((team) =>
-      teams
-        .slice(teams.findIndex((opponent) => opponent.teamId === team.teamId) + 1)
-        .map((opponent) => ({ gameId: uuid(), team, opponent }))
+      teams.slice(teams.findIndex((opponent) => opponent.teamId === team.teamId) + 1).map((opponent) => ({
+        gameId: uuid(),
+        team: { name: team.name, teamId: team.teamId ?? '' },
+        opponent: { name: opponent.name, teamId: opponent.teamId ?? '' },
+      }))
     );
   }
 

@@ -24,8 +24,8 @@ export const buildGameFromTeams = (
   number,
   group,
   slot,
-  team: { teamId: homeTeam.teamId, name: homeTeam.name },
-  opponent: { teamId: awayTeam.teamId, name: awayTeam.name },
+  team: { teamId: homeTeam.teamId ?? 'mockedTeamId', name: homeTeam.name ?? 'mockedTeamName' },
+  opponent: { teamId: awayTeam.teamId ?? 'mockedOpponentId', name: awayTeam.name ?? 'mockedOpponentName' },
 });
 
 export const buildUpdateFieldsFromGames = (team: Team, games: Game[]): BulkUpdate => ({
@@ -69,7 +69,16 @@ export const buildRandomMatchPlan = (teams: Team[]): MatchPlan => {
   let gameIndex = 1;
   for (let iTeam = 0; iTeam < teams.length; iTeam++) {
     for (let iOpponent = iTeam + 1; iOpponent < teams.length; iOpponent++) {
-      matchPlan.push({ gameId: uuid(), number: gameIndex++, team: teams[iTeam], opponent: teams[iOpponent], group: 1 });
+      matchPlan.push({
+        gameId: uuid(),
+        number: gameIndex++,
+        team: { teamId: teams[iTeam].teamId ?? 'mockedTeamId', name: teams[iTeam].name ?? 'mockedTeamName' },
+        opponent: {
+          teamId: teams[iOpponent].teamId ?? 'mockedOpponentId',
+          name: teams[iOpponent].name ?? 'mockedOpponentName',
+        },
+        group: 1,
+      });
     }
   }
   return matchPlan;
