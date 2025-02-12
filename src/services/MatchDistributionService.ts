@@ -21,7 +21,7 @@ export class MatchDistributionService {
       .sort((gameOne, gameTwo) => gameOne.number - gameTwo.number);
   }
 
-  public distributeMatchSlots(matchPlan: MatchPlan, numberOfPitches: number): MatchPlan {
+  public distributeMatchSlots(matchPlan: MatchPlan, numberOfPitches = 1): MatchPlan {
     console.log('Distribute match slots');
 
     const validation = this.matchValidationService.validateMatchPlan(matchPlan);

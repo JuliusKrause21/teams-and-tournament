@@ -21,6 +21,8 @@ import { MatchDistributionService } from './services/MatchDistributionService';
 import { MatchValidationService } from './services/MatchValidationService';
 import { GameService } from './services/GameService';
 import { GameRepository } from './repositories/GameRepository';
+import { GameController } from './controllers/GameConstroller';
+import { GameRoute } from './routes/GameRoute';
 
 export const container = new Container();
 
@@ -55,8 +57,10 @@ container.bind<GameService>(GameService).toSelf().inSingletonScope();
 container.bind<TeamsController>(TeamsController).toSelf().inSingletonScope();
 container.bind<MatchesController>(MatchesController).toSelf().inSingletonScope();
 container.bind<TasksController>(TasksController).toSelf().inSingletonScope();
+container.bind<GameController>(GameController).toSelf().inSingletonScope();
 
 // routes
 container.bind<TeamsRoute>(TeamsRoute).toSelf();
 container.bind<MatchesRoute>(MatchesRoute).toSelf();
 container.bind<TasksRoute>(TasksRoute).toSelf();
+container.bind<GameRoute>(GameRoute).toSelf();

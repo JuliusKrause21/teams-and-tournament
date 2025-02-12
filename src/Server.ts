@@ -10,11 +10,13 @@ import { HttpError } from 'express-openapi-validator/dist/framework/types';
 import { isOpenApiError } from './models/OpenApiError';
 import swaggerUi from 'swagger-ui-express';
 import apiJson from './api.json';
+import { GameRoute } from './routes/GameRoute';
 
 @injectable()
 export class Server {
   constructor(
     @inject(TeamsRoute) private teamsRoute: TeamsRoute,
+    @inject(GameRoute) private readonly gameRoute: GameRoute,
     @inject(MatchesRoute) private readonly matchesRoute: MatchesRoute,
     @inject(TasksRoute) private readonly tasksRoute: TasksRoute
   ) {}
@@ -38,6 +40,7 @@ export class Server {
     });
 
     app.use('/teams', this.teamsRoute.registerRoutes());
+    app.use('/games', this.gameRoute.registerRoutes());
     app.use('/matches', this.matchesRoute.registerRoutes());
     app.use('/tasks', this.tasksRoute.registerRoutes());
 

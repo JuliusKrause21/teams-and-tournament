@@ -7,6 +7,12 @@ export enum GameRepositoryError {
   DeleteAcknowledgeFailed = 'Delete games was not acknowledged',
 }
 
+// TODO: Make generic interface for Team and Game
+export interface BulkUpdateGame {
+  game_id: string | undefined;
+  updateFields: Partial<GameEntity>;
+}
+
 @injectable()
 export class GameRepository {
   constructor(@inject(Database) private readonly db: Database) {
@@ -27,5 +33,21 @@ export class GameRepository {
     if (!result.acknowledged) {
       throw new Error(GameRepositoryError.InsertAcknowledgeFailed);
     }
+  }
+
+  public sortByGroupAndNumber(): Promise<GameEntity[]> {
+    return this.gameCollection.aggregate<GameEntity>([{ $sort: { group: 1 } }, { $sort: { number: 1 } }]).toArray();
+  }
+
+  public async bulkUpdate(bulkData: BulkUpdateGame[]): Promise<void> {
+    console.log('Bulk update games');
+    const operations = bulkData.map((data) => ({
+      updateOne: {
+        filter: { game_id: data.game_id },
+        update: { $set: data.updateFields },
+      },
+    }));
+
+    await this.gameCollection.bulkWrite(operations);
   }
 }

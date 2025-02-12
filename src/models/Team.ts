@@ -9,6 +9,8 @@ export interface Group {
   teams: Team[];
 }
 
+export type TeamInfo = Required<Pick<Team, 'name' | 'teamId'>>;
+
 export type TeamQueryOptions = Pick<Team, 'group'>;
 
 export function isTeamQueryOption(query: unknown): query is TeamQueryOptions {

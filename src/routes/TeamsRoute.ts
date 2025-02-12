@@ -16,9 +16,6 @@ export class TeamsRoute {
     teamsRouter.post('/generate-match-plan', async (req: Request, res: Response) =>
       this.teamsController.generateMatchPlan(req, res)
     );
-    teamsRouter.post('/schedule-matches', async (req: Request, res: Response) =>
-      this.teamsController.scheduleMatches(req, res)
-    );
 
     return teamsRouter;
   }

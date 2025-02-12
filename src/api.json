@@ -5,7 +5,9 @@
     "description": "API for handling teams and tournament administration",
     "version": "0.0.1"
   },
-  "tags": [{ "name": "Teams" }, { "name": "Matches" }, { "name":  "Tasks" }],
+  "tags": [{ "name": "Teams" }, {
+    "name": "Games"
+  }, { "name": "Matches" }, { "name":  "Tasks" }],
   "servers": [],
   "paths": {
     "/teams": {
@@ -111,6 +113,40 @@
         "responses": {
           "200": {
             "description": "Match plan successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/matchPlan"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to perform the operation"
+          }
+        }
+      }
+    },
+    "/games/schedule-match-plan": {
+      "post": {
+        "tags": [
+          "Games"
+        ],
+        "summary": "Schedule games of match plan",
+        "requestBody": {
+          "description": "Schedule options for match plan",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/scheduleOptions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Games successfully scheduled",
             "content": {
               "application/json": {
                 "schema": {
@@ -527,6 +563,18 @@
           }
         },
         "required": ["number", "teams"]
+      },
+      "scheduleOptions": {
+        "type": "object",
+        "description": "Schedule options for match plan",
+        "properties": {
+          "numberOfPitches": {"type":  "number"},
+          "date": {"type":  "string"},
+          "start": {"type": "string"},
+          "location": {"type":  "string"},
+          "playTimeInMinutes": {"type":  "number"},
+          "breakBetweenInMinutes": {"type": "number"}
+        }
       },
       "match": {
         "type": "object",

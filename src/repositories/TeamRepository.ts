@@ -47,10 +47,6 @@ export class TeamRepository {
       .toArray();
   }
 
-  public sortBySlotAndNumber(): Promise<TeamEntity[]> {
-    return this.teamCollection.aggregate<TeamEntity>([{ $sort: { slot: 1 } }, { $sort: { number: 1 } }]).toArray();
-  }
-
   public async insert(teamEntity: TeamEntity) {
     await this.teamCollection.insertOne(teamEntity);
   }

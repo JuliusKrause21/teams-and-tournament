@@ -45,14 +45,4 @@ export class TeamsController {
       res.status(500).json(error);
     }
   }
-
-  public async scheduleMatches(_req: Request, res: Response): Promise<void> {
-    console.log('Schedule matches of match plan');
-    try {
-      const matchPlan = await this.teamsService.generateMatchPlan();
-      res.status(200).json(matchPlan);
-    } catch (error) {
-      res.status(500).json(error);
-    }
-  }
 }

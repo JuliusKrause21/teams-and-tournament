@@ -68,11 +68,14 @@ export class TeamService {
     return groups;
   }
 
+  // TODO: Move to game service
   public async generateMatchPlan(): Promise<MatchPlan> {
     console.log('Generate match plan');
     let groups = await this.teamRepository.groupByGroupNumber();
 
+    // TODO: Make shuffle groups public method of team service
     if (groups.length === 0) {
+      // TODO: Replace this with group field set to one for each team during creation
       groups = await this.shuffleGroups({ numberOfGroups: 1 });
     }
 
@@ -81,7 +84,6 @@ export class TeamService {
     );
 
     await this.gameService.replaceAllGames(matchPlan);
-    // TODO: Save game ids to participating team
 
     const games = groups.flatMap((group) =>
       group.teams.flatMap((team) =>
@@ -99,31 +101,6 @@ export class TeamService {
 
     return matchPlan;
   }
-
-  // TODO: Move to GameService
-  /*public async scheduleMatches(): Promise<MatchPlan> {
-    const teamEntities = await this.teamRepository.sortBySlotAndNumber();
-    const matchPlan: MatchPlan = teamEntities.flatMap((teamEntity) =>
-      (teamEntity.games ?? []).map((game) => ({
-        gameId: game.game_id,
-        location: game.location,
-        number: game.number,
-        group: game.group ?? 1,
-        team: { teamId: teamEntity.team_id, name: teamEntity.name },
-        opponent: game.opponent,
-      }))
-    );
-
-    if (matchPlan.length === 0) {
-      return matchPlan;
-    }
-
-    const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
-      matchPlan,
-      scheduleConfig.numberOfPitches
-    );
-    return this.matchScheduleService.scheduleMatches(distributedMatchPlan);
-  }*/
 
   private mapTeamEntityToTeam(teamEntity: TeamEntity): Team {
     return {
