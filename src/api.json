@@ -104,10 +104,10 @@
         }
       }
     },
-    "/teams/generate-match-plan": {
+    "/games/create-initial-match-plan": {
       "post": {
         "tags": [
-          "Teams"
+          "Games"
         ],
         "summary": "Generate match plan from groups",
         "responses": {
@@ -570,7 +570,6 @@
         "properties": {
           "numberOfPitches": {"type":  "number"},
           "date": {"type":  "string"},
-          "start": {"type": "string"},
           "location": {"type":  "string"},
           "playTimeInMinutes": {"type":  "number"},
           "breakBetweenInMinutes": {"type": "number"}

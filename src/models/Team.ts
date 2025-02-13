@@ -1,3 +1,5 @@
+import { TeamEntity } from '../repositories/entities/TeamEntity';
+
 export interface Team {
   name: string;
   teamId?: string;
@@ -7,6 +9,14 @@ export interface Team {
 export interface Group {
   number: number;
   teams: Team[];
+}
+
+export function mapTeamEntityToTeam(teamEntity: TeamEntity): Team {
+  return {
+    teamId: teamEntity.team_id,
+    group: teamEntity.group,
+    name: teamEntity.name,
+  };
 }
 
 export type TeamInfo = Required<Pick<Team, 'name' | 'teamId'>>;

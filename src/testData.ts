@@ -3,6 +3,7 @@ import { Group, Team } from './models/Team';
 import { Game, MatchPlan } from './models/Game';
 import { v4 as uuid } from 'uuid';
 import { BulkUpdate } from './repositories/TeamRepository';
+import { GameEntity } from './repositories/entities/GameEntity';
 
 interface Combination {
   teamIndex: number;
@@ -14,6 +15,18 @@ interface Combination {
 
 export const buildTeamEntityFromTeam = (team: Team): TeamEntity =>
   new TeamEntity({ name: team.name, team_id: team.teamId, group: team.group });
+
+export const buildGameEntityFromGame = (game: Game): GameEntity =>
+  new GameEntity({
+    game_id: game.gameId,
+    game_number: game.number,
+    group: game.group,
+    last_modified: 'mocked-last-modified',
+    opponent: game.opponent.teamId,
+    schedule: game.schedule ?? { date: 'mocked-date' },
+    slot: game.slot ?? 1,
+    team: game.team.teamId,
+  });
 
 export const buildGameFromTeams = (
   homeTeam: Team,

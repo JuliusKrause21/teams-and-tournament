@@ -2,10 +2,12 @@ import { inject, injectable } from 'inversify';
 import { GameRepository } from '../repositories/GameRepository';
 import { Game, GameScheduleOptions, MatchPlan } from '../models/Game';
 import { GameEntity } from '../repositories/entities/GameEntity';
-import { TeamRepository } from '../repositories/TeamRepository';
+import { BulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { MatchDistributionService } from './MatchDistributionService';
 import { DateTime } from 'luxon';
+import { groupBy } from 'lodash';
+import { mapTeamEntityToTeam } from '../models/Team';
 
 @injectable()
 export class GameService {
@@ -15,13 +17,36 @@ export class GameService {
     @inject(TeamRepository) private readonly teamRepository: TeamRepository
   ) {}
 
-  public async replaceAllGames(games: Game[]) {
-    await this.gameRepository.wipeDatabase();
-    await this.gameRepository.bulkInsert(games.map(this.mapGameToGameEntity));
+  public async createGames(): Promise<MatchPlan> {
+    console.log('Create games');
+    let groups = await this.teamRepository.groupByGroupNumber();
+
+    const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
+      groups.map((group) => ({ number: group.number, teams: group.teams.map(mapTeamEntityToTeam) }))
+    );
+
+    const games = groups.flatMap((group) =>
+      group.teams.flatMap((team) =>
+        matchPlan.filter((game) => game.team.teamId === team.team_id || game.opponent.teamId === team.team_id)
+      )
+    );
+
+    const gameIdsPerTeam = groupBy(games, 'team.teamId');
+    const teamsUpdateData: BulkUpdate[] = Object.entries(gameIdsPerTeam).map(([teamId, games]) => ({
+      team_id: teamId,
+      updateFields: { games: games.map((game) => game.gameId) },
+    }));
+
+    // TODO: Check how atomic operation in mongo works
+    // TODO: Error handling
+    await this.replaceAllGames(matchPlan);
+    await this.teamRepository.bulkUpdate(teamsUpdateData);
+
+    return matchPlan;
   }
 
-  public async scheduleMatches(scheduleOptions: Partial<GameScheduleOptions>): Promise<MatchPlan> {
-    console.log('Schedule matches');
+  public async scheduleGames(scheduleOptions: Partial<GameScheduleOptions>): Promise<MatchPlan> {
+    console.log('Schedule games');
     let slot = 0;
     const numberOfPitches = scheduleOptions.numberOfPitches ?? 1;
 
@@ -29,26 +54,23 @@ export class GameService {
     const teamEntities = await this.teamRepository.findAll();
 
     // TODO: Make nice error handling with neverthrow --> this is repository level error
-    if (gameEntities === undefined) {
+    if (gameEntities.length === 0) {
       throw new Error('Could not find any games');
     }
 
-    if (teamEntities === undefined) {
+    if (teamEntities.length === 0) {
       throw new Error('Could not find any teams');
     }
 
-    const matchPlan: MatchPlan = gameEntities.map((gameEntity) => this.mapGameEntityToGame(gameEntity, teamEntities));
+    const matchPlan = gameEntities.map((gameEntity) => this.mapGameEntityToGame(gameEntity, teamEntities));
 
-    if (matchPlan.length === 0) {
-      return matchPlan;
-    }
-
+    // TODO: This requires a valid match plan --> error handling
     const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
       matchPlan,
       scheduleOptions.numberOfPitches
     );
 
-    // TODO: Shift tests to game service
+    // TODO: Name of locations from input
     const scheduledMatchPlan = distributedMatchPlan.map((game, index) => {
       if (index > 0 && index % numberOfPitches === 0) {
         slot++;
@@ -80,6 +102,12 @@ export class GameService {
       }))
     );
     return scheduledMatchPlan;
+  }
+
+  // TODO: check atomic operation in mongo
+  private async replaceAllGames(games: Game[]) {
+    await this.gameRepository.wipeDatabase();
+    await this.gameRepository.bulkInsert(games.map(this.mapGameToGameEntity));
   }
 
   private mapGameToGameEntity(game: Game): GameEntity {

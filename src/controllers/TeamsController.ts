@@ -34,15 +34,4 @@ export class TeamsController {
       res.status(500).json(error);
     }
   }
-
-  // TODO: update api.json to return an error object for 500
-  public async generateMatchPlan(_req: Request, res: Response): Promise<void> {
-    console.log('Generate match plan');
-    try {
-      const matchPlan = await this.teamsService.generateMatchPlan();
-      res.status(200).json(matchPlan);
-    } catch (error) {
-      res.status(500).json(error);
-    }
-  }
 }

@@ -1,11 +1,8 @@
 import { TeamEntity } from '../repositories/entities/TeamEntity';
 import { BulkUpdate, TeamRepository } from '../repositories/TeamRepository';
 import { inject, injectable } from 'inversify';
-import { Group, Team, TeamQueryOptions } from '../models/Team';
-import { groupBy, shuffle } from 'lodash';
-import { MatchPlan } from '../models/Game';
-import { MatchDistributionService } from './MatchDistributionService';
-import { GameService } from './GameService';
+import { Group, mapTeamEntityToTeam, Team, TeamQueryOptions } from '../models/Team';
+import { shuffle } from 'lodash';
 
 export enum TeamServiceError {
   NoTeamsFound = 'Could not get teams from database',
@@ -19,11 +16,7 @@ export interface ShuffleParameters {
 
 @injectable()
 export class TeamService {
-  constructor(
-    @inject(TeamRepository) private readonly teamRepository: TeamRepository,
-    @inject(GameService) private readonly gameService: GameService,
-    @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService
-  ) {}
+  constructor(@inject(TeamRepository) private readonly teamRepository: TeamRepository) {}
 
   public async listTeams(query?: TeamQueryOptions): Promise<Team[]> {
     /*
@@ -31,7 +24,7 @@ export class TeamService {
     Calls to several repositories, data combination and mapping takes place here.
      */
     const teamEntities = await this.teamRepository.findAll(query);
-    return teamEntities.map(this.mapTeamEntityToTeam);
+    return teamEntities.map(mapTeamEntityToTeam);
   }
 
   public async createTeam(teamEntity: TeamEntity): Promise<void> {
@@ -66,47 +59,5 @@ export class TeamService {
 
     await this.teamRepository.bulkUpdate(teamsUpdateData);
     return groups;
-  }
-
-  // TODO: Move to game service
-  public async generateMatchPlan(): Promise<MatchPlan> {
-    console.log('Generate match plan');
-    let groups = await this.teamRepository.groupByGroupNumber();
-
-    // TODO: Make shuffle groups public method of team service
-    if (groups.length === 0) {
-      // TODO: Replace this with group field set to one for each team during creation
-      groups = await this.shuffleGroups({ numberOfGroups: 1 });
-    }
-
-    const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
-      groups.map((group) => ({ number: group.number, teams: group.teams.map(this.mapTeamEntityToTeam) }))
-    );
-
-    await this.gameService.replaceAllGames(matchPlan);
-
-    const games = groups.flatMap((group) =>
-      group.teams.flatMap((team) =>
-        matchPlan.filter((game) => game.team.teamId === team.team_id || game.opponent.teamId === team.team_id)
-      )
-    );
-
-    const gameIdsPerTeam = groupBy(games, 'team.teamId');
-    const teamsUpdateData: BulkUpdate[] = Object.entries(gameIdsPerTeam).map(([teamId, games]) => ({
-      team_id: teamId,
-      updateFields: { games: games.map((game) => game.gameId) },
-    }));
-
-    await this.teamRepository.bulkUpdate(teamsUpdateData);
-
-    return matchPlan;
-  }
-
-  private mapTeamEntityToTeam(teamEntity: TeamEntity): Team {
-    return {
-      teamId: teamEntity.team_id,
-      group: teamEntity.group,
-      name: teamEntity.name,
-    };
   }
 }

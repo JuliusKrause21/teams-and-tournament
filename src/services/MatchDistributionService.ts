@@ -66,14 +66,14 @@ export class MatchDistributionService {
         continue;
       }
       nextGame = game;
-      const numberOfOccuringTeams =
+      const numberOfOccurringTeams =
         this.getTeamIdsOfSlot(matchPlan).filter((id) => id === game.team.teamId).length +
         this.getTeamIdsOfSlot(matchPlan).filter((id) => id === game.opponent.teamId).length;
 
-      if (numberOfOccuringTeams < score) {
+      if (numberOfOccurringTeams < score) {
         nextGame = game;
       }
-      score = numberOfOccuringTeams;
+      score = numberOfOccurringTeams;
     }
     return nextGame;
   }

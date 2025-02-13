@@ -9,8 +9,12 @@ export class GameRoute {
   public registerRoutes() {
     const gameRouter = Router();
 
+    gameRouter.post('/create-initial-match-plan', async (req: Request, res: Response) =>
+      this.gameController.generateInitialMatchPlan(req, res)
+    );
+
     gameRouter.post('/schedule-match-plan', async (req: Request, res: Response) =>
-      this.gameController.scheduleMatches(req, res)
+      this.gameController.generateScheduledMatchPlan(req, res)
     );
 
     return gameRouter;
