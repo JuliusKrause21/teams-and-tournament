@@ -5,18 +5,18 @@ export class TeamEntity {
   public _id?: ObjectId;
   public name: string;
   public team_id?: string;
-  public group?: number;
+  public group: number;
   public games?: string[];
 
   constructor({
     name,
     team_id = uuid(),
-    group,
+    group = 1,
     games = [],
   }: {
     name: string;
     team_id?: string;
-    group?: number;
+    group: number;
     games?: string[];
   }) {
     this.name = name;
