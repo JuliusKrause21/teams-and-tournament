@@ -84,6 +84,7 @@ export class MatchDistributionService {
     const usedIdsOfSlots: UsedIdsOfSlot[] = [];
     let slot = 1;
 
+    // TODO: Add timeout to avoid infinite loop
     while (matchPlan.find((game) => !game.slot)) {
       const gamesWithoutSlot = matchPlan.filter((game) => !game.slot);
       let gameIndex = 0;

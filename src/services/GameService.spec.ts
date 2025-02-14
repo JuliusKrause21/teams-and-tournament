@@ -10,9 +10,10 @@ import {
 import { anything, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { TeamRepository } from '../repositories/TeamRepository';
 import { MatchDistributionService } from './MatchDistributionService';
-import { GameService } from './GameService';
+import { GameService, GameServiceError } from './GameService';
 import { GameRepository } from '../repositories/GameRepository';
 import { GameSchedule } from '../models/Game';
+import { err, ok } from 'neverthrow';
 
 describe('GameService', () => {
   let teamRepository: TeamRepository;
@@ -49,47 +50,62 @@ describe('GameService', () => {
       buildUpdateFieldsFromGames(teams[1], [gameOneTwo]),
     ];
 
-    test('to throw an error if no groups could be found and no teams available', () => {
-      when(teamRepository.groupByGroupNumber()).thenResolve([]);
-      when(teamRepository.findAll()).thenResolve([]);
-      expect(gameService.createGames()).rejects.toThrow();
+    const mockedErrorMessage = 'This is an error';
+
+    test('to return an error if no reading groups from the db fails', async () => {
+      when(teamRepository.groupByGroupNumber()).thenResolve(err(new Error(mockedErrorMessage)));
+      const result = await gameService.createGames();
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
-    test('to throw an error if db could not be deleted', async () => {
+    test('to return an error if db could not be deleted', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
-      when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
+      when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
-      when(gameRepository.wipeDatabase()).thenReject();
-      expect(gameService.createGames()).rejects.toThrow();
+      when(gameRepository.wipeDatabase()).thenResolve(err(new Error(mockedErrorMessage)));
+
+      const result = await gameService.createGames();
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
-    test('to throw an error if games could not be inserted in db', async () => {
+    test('to return an error if games could not be inserted in db', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
-      when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
+      when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
-      when(gameRepository.bulkInsert(anything())).thenReject();
-      expect(gameService.createGames()).rejects.toThrow();
+      when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
+      when(gameRepository.bulkInsert(anything())).thenResolve(err(new Error(mockedErrorMessage)));
+
+      const result = await gameService.createGames();
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
-    test('to throw an error if teams could not be updated in db', async () => {
+    test('to return an error if teams could not be updated in db', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
-      when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
+      when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
-      when(teamRepository.bulkUpdate(anything())).thenReject();
-      expect(gameService.createGames()).rejects.toThrow();
+      when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
+      when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
+      when(teamRepository.bulkUpdate(anything())).thenResolve(err(new Error(mockedErrorMessage)));
+
+      const result = await gameService.createGames();
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
     test('to setup initial match plan for one group and update team entities', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
-      when(teamRepository.groupByGroupNumber()).thenResolve([{ number: 1, teams: teamsInGroupOne }]);
+      when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
+      when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
+      when(teamRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
+
       const result = await gameService.createGames();
 
-      expect(result).toStrictEqual(matchPlan);
+      expect(result).toStrictEqual(ok(matchPlan));
       verify(teamRepository.bulkUpdate(objectContaining(expectedUpdateFields))).once();
     });
 
@@ -112,14 +128,20 @@ describe('GameService', () => {
         buildUpdateFieldsFromGames(teams[4], [gameTwoTwo]),
       ];
 
-      when(teamRepository.groupByGroupNumber()).thenResolve([
-        { number: 1, teams: teamsInGroupOne },
-        { number: 2, teams: teamsInGroupTwo },
-      ]);
+      when(teamRepository.groupByGroupNumber()).thenResolve(
+        ok([
+          { number: 1, teams: teamsInGroupOne },
+          { number: 2, teams: teamsInGroupTwo },
+        ])
+      );
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
+      when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
+      when(teamRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
+
       const result = await gameService.createGames();
 
-      expect(result).toStrictEqual(matchPlan);
+      expect(result).toStrictEqual(ok(matchPlan));
       verify(teamRepository.bulkUpdate(objectContaining(expectedUpdateFieldsTotal))).once();
     });
   });
@@ -131,32 +153,51 @@ describe('GameService', () => {
 
     const games = [gameOneOne, gameOneTwo, gameOneThree];
 
-    test('to throw error if no games available', async () => {
-      when(gameRepository.sortByGroupAndNumber()).thenResolve([]);
-      expect(gameService.scheduleGames(anything())).rejects.toThrow('Could not find any games');
+    const mockedErrorMessage = 'Mocked error message';
+
+    test('to return an error if games aggregation fails', async () => {
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(err(new Error(mockedErrorMessage)));
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
-    test('to throw error if no teams available', async () => {
-      when(gameRepository.sortByGroupAndNumber()).thenResolve(games.map(buildGameEntityFromGame));
-      when(teamRepository.findAll()).thenResolve([]);
-      expect(gameService.scheduleGames(anything())).rejects.toThrow('Could not find any teams');
+    test('to return an error if finding teams in db fails', async () => {
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(err(new Error(mockedErrorMessage)));
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
+    });
+
+    test('to return an error if no games in db', async () => {
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok([]));
+      when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(GameServiceError.NoGamesFound)));
+    });
+
+    test('to return an error if no teams in db', async () => {
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(ok([]));
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(GameServiceError.NoTeamsFound)));
     });
 
     test('to throw error if distributed match plan is invalid', async () => {
-      when(gameRepository.sortByGroupAndNumber()).thenResolve(games.map(buildGameEntityFromGame));
-      when(teamRepository.findAll()).thenResolve([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam));
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), anything())).thenThrow(new Error('Mocked error'));
 
       expect(gameService.scheduleGames(anything())).rejects.toThrow('Mocked error');
     });
 
-    test('to throw error if game repository update fails', async () => {
-      when(gameRepository.sortByGroupAndNumber()).thenResolve(games.map(buildGameEntityFromGame));
-      when(teamRepository.findAll()).thenResolve([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam));
+    test('to return an error if game repository update fails', async () => {
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), anything())).thenReturn([]);
-      when(gameRepository.bulkUpdate(anything())).thenReject(new Error('Mocked error'));
+      when(gameRepository.bulkUpdate(anything())).thenResolve(err(new Error(mockedErrorMessage)));
 
-      expect(gameService.scheduleGames(anything())).rejects.toThrow('Mocked error');
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
     test('to schedule games on one pitch', async () => {
@@ -184,10 +225,10 @@ describe('GameService', () => {
       ];
       const scheduledMatchPlan = matchPlan.map((game, index) => ({ ...game, schedule: expectedSchedule[index] }));
 
-      when(gameRepository.sortByGroupAndNumber()).thenResolve(games.map(buildGameEntityFromGame));
-      when(teamRepository.findAll()).thenResolve([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam));
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), numberOfPitches)).thenReturn(matchPlan);
-      when(gameRepository.bulkUpdate(anything())).thenResolve();
+      when(gameRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
 
       const result = await gameService.scheduleGames({
         numberOfPitches,
@@ -197,7 +238,7 @@ describe('GameService', () => {
         breakBetweenInMinutes: 5,
       });
 
-      expect(removePropertyFromAllEntries(result, 'gameId')).toStrictEqual(
+      expect(removePropertyFromAllEntries(result._unsafeUnwrap(), 'gameId')).toStrictEqual(
         removePropertyFromAllEntries(scheduledMatchPlan, 'gameId')
       );
     });
@@ -228,10 +269,10 @@ describe('GameService', () => {
       ];
       const scheduledMatchPlan = matchPlan.map((game, index) => ({ ...game, schedule: expectedSchedule[index] }));
 
-      when(gameRepository.sortByGroupAndNumber()).thenResolve(games.map(buildGameEntityFromGame));
-      when(teamRepository.findAll()).thenResolve([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam));
+      when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
+      when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), numberOfPitches)).thenReturn(matchPlan);
-      when(gameRepository.bulkUpdate(anything())).thenResolve();
+      when(gameRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
 
       const result = await gameService.scheduleGames({
         numberOfPitches,
@@ -241,7 +282,7 @@ describe('GameService', () => {
         breakBetweenInMinutes: 5,
       });
 
-      expect(removePropertyFromAllEntries(result, 'gameId')).toStrictEqual(
+      expect(removePropertyFromAllEntries(result._unsafeUnwrap(), 'gameId')).toStrictEqual(
         removePropertyFromAllEntries(scheduledMatchPlan, 'gameId')
       );
     });

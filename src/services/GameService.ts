@@ -8,6 +8,13 @@ import { MatchDistributionService } from './MatchDistributionService';
 import { DateTime } from 'luxon';
 import { groupBy } from 'lodash';
 import { mapTeamEntityToTeam } from '../models/Team';
+import { err, ok, Result } from 'neverthrow';
+import combine = Result.combine;
+
+export enum GameServiceError {
+  NoGamesFound = 'No games found in db',
+  NoTeamsFound = 'No teams found in db',
+}
 
 @injectable()
 export class GameService {
@@ -17,15 +24,18 @@ export class GameService {
     @inject(TeamRepository) private readonly teamRepository: TeamRepository
   ) {}
 
-  public async createGames(): Promise<MatchPlan> {
+  public async createGames(): Promise<Result<MatchPlan, Error>> {
     console.log('Create games');
     let groups = await this.teamRepository.groupByGroupNumber();
+    if (groups.isErr()) {
+      return err(groups.error);
+    }
 
     const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
-      groups.map((group) => ({ number: group.number, teams: group.teams.map(mapTeamEntityToTeam) }))
+      groups.value.map((group) => ({ number: group.number, teams: group.teams.map(mapTeamEntityToTeam) }))
     );
 
-    const games = groups.flatMap((group) =>
+    const games = groups.value.flatMap((group) =>
       group.teams.flatMap((team) =>
         matchPlan.filter((game) => game.team.teamId === team.team_id || game.opponent.teamId === team.team_id)
       )
@@ -38,39 +48,51 @@ export class GameService {
     }));
 
     // TODO: Check how atomic operation in mongo works
-    // TODO: Error handling
-    await this.replaceAllGames(matchPlan);
-    await this.teamRepository.bulkUpdate(teamsUpdateData);
+    const result = combine([
+      await this.replaceAllGames(matchPlan),
+      await this.teamRepository.bulkUpdate(teamsUpdateData),
+    ]);
 
-    return matchPlan;
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    return ok(matchPlan);
   }
 
-  public async scheduleGames(scheduleOptions: Partial<GameScheduleOptions>): Promise<MatchPlan> {
+  public async scheduleGames(scheduleOptions: Partial<GameScheduleOptions>): Promise<Result<MatchPlan, Error>> {
     console.log('Schedule games');
     let slot = 0;
     const numberOfPitches = scheduleOptions.numberOfPitches ?? 1;
 
     const gameEntities = await this.gameRepository.sortByGroupAndNumber();
+    if (gameEntities.isErr()) {
+      return err(gameEntities.error);
+    }
     const teamEntities = await this.teamRepository.findAll();
-
-    // TODO: Make nice error handling with neverthrow --> this is repository level error
-    if (gameEntities.length === 0) {
-      throw new Error('Could not find any games');
+    if (teamEntities.isErr()) {
+      return err(teamEntities.error);
     }
 
-    if (teamEntities.length === 0) {
-      throw new Error('Could not find any teams');
+    if (gameEntities.value.length === 0) {
+      return err(new Error(GameServiceError.NoGamesFound));
     }
 
-    const matchPlan = gameEntities.map((gameEntity) => this.mapGameEntityToGame(gameEntity, teamEntities));
+    if (teamEntities.value.length === 0) {
+      return err(new Error(GameServiceError.NoTeamsFound));
+    }
 
-    // TODO: This requires a valid match plan --> error handling
+    const matchPlan = gameEntities.value.map((gameEntity) => this.mapGameEntityToGame(gameEntity, teamEntities.value));
+
+    // TODO: This requires a valid match plan --> error handling --> This service can throw!
     const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
       matchPlan,
       scheduleOptions.numberOfPitches
     );
 
-    // TODO: Name of locations from input
+    // TODO: Validate match plan before scheduling
+
+    // TODO: Name of locations from input --> separate method
     const scheduledMatchPlan = distributedMatchPlan.map((game, index) => {
       if (index > 0 && index % numberOfPitches === 0) {
         slot++;
@@ -95,19 +117,24 @@ export class GameService {
       };
     });
 
-    await this.gameRepository.bulkUpdate(
+    const result = await this.gameRepository.bulkUpdate(
       scheduledMatchPlan.map(this.mapGameToGameEntity).map((gameEntity) => ({
         game_id: gameEntity.game_id,
         updateFields: { schedule: gameEntity.schedule },
       }))
     );
-    return scheduledMatchPlan;
+    if (result.isErr()) {
+      return err(result.error);
+    }
+    return ok(scheduledMatchPlan);
   }
 
   // TODO: check atomic operation in mongo
-  private async replaceAllGames(games: Game[]) {
-    await this.gameRepository.wipeDatabase();
-    await this.gameRepository.bulkInsert(games.map(this.mapGameToGameEntity));
+  private async replaceAllGames(games: Game[]): Promise<Result<undefined[], Error>> {
+    return combine([
+      await this.gameRepository.wipeDatabase(),
+      await this.gameRepository.bulkInsert(games.map(this.mapGameToGameEntity)),
+    ]);
   }
 
   private mapGameToGameEntity(game: Game): GameEntity {
@@ -128,6 +155,7 @@ export class GameService {
     };
   }
 
+  // TODO: How to do error handling here
   private mapGameEntityToGame(gameEntity: GameEntity, teamEntities: TeamEntity[]): Game {
     const team = teamEntities.find((teamEntity) => teamEntity.team_id === gameEntity.team);
     const opponent = teamEntities.find((teamEntity) => teamEntity.team_id === gameEntity.opponent);
