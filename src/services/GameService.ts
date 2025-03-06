@@ -10,16 +10,20 @@ import { groupBy } from 'lodash';
 import { mapTeamEntityToTeam } from '../models/Team';
 import { err, ok, Result } from 'neverthrow';
 import combine = Result.combine;
+import { MatchValidationService } from './MatchValidationService';
 
 export enum GameServiceError {
   NoGamesFound = 'No games found in db',
   NoTeamsFound = 'No teams found in db',
+  InvalidMatchPlan = 'Match plan validation failed',
+  MatchPlanDistributionFailed = 'Match plan distribution failed',
 }
 
 @injectable()
 export class GameService {
   constructor(
     @inject(MatchDistributionService) private readonly matchDistributionService: MatchDistributionService,
+    @inject(MatchValidationService) private readonly matchValidationService: MatchValidationService,
     @inject(GameRepository) private readonly gameRepository: GameRepository,
     @inject(TeamRepository) private readonly teamRepository: TeamRepository
   ) {}
@@ -34,6 +38,11 @@ export class GameService {
     const matchPlan = this.matchDistributionService.generateOptimizedMatchPlan(
       groups.value.map((group) => ({ number: group.number, teams: group.teams.map(mapTeamEntityToTeam) }))
     );
+
+    const validation = this.matchValidationService.validateMatchPlan(matchPlan);
+    if (validation.length > 0) {
+      return err(new Error(GameServiceError.InvalidMatchPlan, { cause: JSON.stringify(validation) }));
+    }
 
     const games = groups.value.flatMap((group) =>
       group.teams.flatMap((team) =>
@@ -84,49 +93,55 @@ export class GameService {
 
     const matchPlan = gameEntities.value.map((gameEntity) => this.mapGameEntityToGame(gameEntity, teamEntities.value));
 
-    // TODO: This requires a valid match plan --> error handling --> This service can throw!
-    const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
-      matchPlan,
-      scheduleOptions.numberOfPitches
-    );
+    try {
+      const distributedMatchPlan = this.matchDistributionService.distributeMatchSlots(
+        matchPlan,
+        scheduleOptions.numberOfPitches
+      );
 
-    // TODO: Validate match plan before scheduling
-
-    // TODO: Name of locations from input --> separate method
-    const scheduledMatchPlan = distributedMatchPlan.map((game, index) => {
-      if (index > 0 && index % numberOfPitches === 0) {
-        slot++;
+      const validation = this.matchValidationService.validateMatchPlan(distributedMatchPlan);
+      if (validation.length > 0) {
+        return err(new Error(GameServiceError.InvalidMatchPlan, { cause: validation }));
       }
-      return {
-        ...game,
-        schedule: {
-          date: DateTime.fromISO(scheduleOptions.date ?? '').toISODate({ format: 'extended' }) ?? '',
-          start:
-            scheduleOptions.date === undefined ||
-            scheduleOptions.playTimeInMinutes === undefined ||
-            scheduleOptions.breakBetweenInMinutes === undefined
-              ? ''
-              : (DateTime.fromISO(scheduleOptions.date)
-                  .plus({
-                    minutes: slot * scheduleOptions.playTimeInMinutes + slot * scheduleOptions.breakBetweenInMinutes,
-                  })
-                  .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? ''),
-          durationInMinutes: scheduleOptions.playTimeInMinutes,
-          location: scheduleOptions.location ?? 'First pitch',
-        },
-      };
-    });
 
-    const result = await this.gameRepository.bulkUpdate(
-      scheduledMatchPlan.map(this.mapGameToGameEntity).map((gameEntity) => ({
-        game_id: gameEntity.game_id,
-        updateFields: { schedule: gameEntity.schedule },
-      }))
-    );
-    if (result.isErr()) {
-      return err(result.error);
+      // TODO: Name of locations from input --> separate method
+      const scheduledMatchPlan = distributedMatchPlan.map((game, index) => {
+        if (index > 0 && index % numberOfPitches === 0) {
+          slot++;
+        }
+        return {
+          ...game,
+          schedule: {
+            date: DateTime.fromISO(scheduleOptions.date ?? '').toISODate({ format: 'extended' }) ?? '',
+            start:
+              scheduleOptions.date === undefined ||
+              scheduleOptions.playTimeInMinutes === undefined ||
+              scheduleOptions.breakBetweenInMinutes === undefined
+                ? ''
+                : (DateTime.fromISO(scheduleOptions.date)
+                    .plus({
+                      minutes: slot * scheduleOptions.playTimeInMinutes + slot * scheduleOptions.breakBetweenInMinutes,
+                    })
+                    .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? ''),
+            durationInMinutes: scheduleOptions.playTimeInMinutes,
+            location: scheduleOptions.location ?? 'First pitch',
+          },
+        };
+      });
+
+      const result = await this.gameRepository.bulkUpdate(
+        scheduledMatchPlan.map(this.mapGameToGameEntity).map((gameEntity) => ({
+          game_id: gameEntity.game_id,
+          updateFields: { schedule: gameEntity.schedule },
+        }))
+      );
+      if (result.isErr()) {
+        return err(result.error);
+      }
+      return ok(scheduledMatchPlan);
+    } catch (error) {
+      return err(new Error(GameServiceError.MatchPlanDistributionFailed, { cause: error }));
     }
-    return ok(scheduledMatchPlan);
   }
 
   // TODO: check atomic operation in mongo

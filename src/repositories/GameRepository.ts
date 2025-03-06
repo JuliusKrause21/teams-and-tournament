@@ -27,7 +27,7 @@ export class GameRepository {
   private gameCollection;
 
   public async wipeDatabase(): Promise<Result<undefined, Error>> {
-    console.log(`Delete all games from database`);
+    console.log('Delete all games from database');
     try {
       const result = await this.gameCollection.deleteMany();
 

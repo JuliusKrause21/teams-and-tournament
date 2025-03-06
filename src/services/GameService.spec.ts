@@ -14,21 +14,24 @@ import { GameService, GameServiceError } from './GameService';
 import { GameRepository } from '../repositories/GameRepository';
 import { GameSchedule } from '../models/Game';
 import { err, ok } from 'neverthrow';
+import { MatchValidationService, ValidationMessage } from './MatchValidationService';
 
 describe('GameService', () => {
   let teamRepository: TeamRepository;
   let gameRepository: GameRepository;
   let matchDistributionService: MatchDistributionService;
+  let matchValidationService: MatchValidationService;
   let gameService: GameService;
 
   beforeEach(() => {
     teamRepository = mock(TeamRepository);
     gameRepository = mock(GameRepository);
-
+    matchValidationService = mock(MatchValidationService);
     matchDistributionService = mock(MatchDistributionService);
 
     gameService = new GameService(
       instance(matchDistributionService),
+      instance(matchValidationService),
       instance(gameRepository),
       instance(teamRepository)
     );
@@ -58,11 +61,24 @@ describe('GameService', () => {
       expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
+    test('to return an error if match plan validation fails', async () => {
+      const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
+      when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
+      when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([
+        { message: ValidationMessage.InvalidCombinationOfTeams, group: 1, games: [gameOneOne] },
+      ]);
+
+      const result = await gameService.createGames();
+      expect(result).toEqual(err(new Error(GameServiceError.InvalidMatchPlan)));
+    });
+
     test('to return an error if db could not be deleted', async () => {
       const matchPlan = [gameOneOne, gameOneTwo, gameOneThree];
 
       when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.wipeDatabase()).thenResolve(err(new Error(mockedErrorMessage)));
 
       const result = await gameService.createGames();
@@ -74,6 +90,7 @@ describe('GameService', () => {
 
       when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
       when(gameRepository.bulkInsert(anything())).thenResolve(err(new Error(mockedErrorMessage)));
 
@@ -86,6 +103,7 @@ describe('GameService', () => {
 
       when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
       when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
       when(teamRepository.bulkUpdate(anything())).thenResolve(err(new Error(mockedErrorMessage)));
@@ -99,6 +117,7 @@ describe('GameService', () => {
 
       when(teamRepository.groupByGroupNumber()).thenResolve(ok([{ number: 1, teams: teamsInGroupOne }]));
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
       when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
       when(teamRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
@@ -135,6 +154,7 @@ describe('GameService', () => {
         ])
       );
       when(matchDistributionService.generateOptimizedMatchPlan(anything())).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.wipeDatabase()).thenResolve(ok(undefined));
       when(gameRepository.bulkInsert(anything())).thenResolve(ok(undefined));
       when(teamRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
@@ -182,18 +202,20 @@ describe('GameService', () => {
       expect(result).toEqual(err(new Error(GameServiceError.NoTeamsFound)));
     });
 
-    test('to throw error if distributed match plan is invalid', async () => {
+    test('to return an error if distributed match plan is invalid', async () => {
       when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
       when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), anything())).thenThrow(new Error('Mocked error'));
 
-      expect(gameService.scheduleGames(anything())).rejects.toThrow('Mocked error');
+      const result = await gameService.scheduleGames(anything());
+      expect(result).toEqual(err(new Error(GameServiceError.MatchPlanDistributionFailed)));
     });
 
     test('to return an error if game repository update fails', async () => {
       when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
       when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), anything())).thenReturn([]);
+      when(matchValidationService.validateMatchPlan(anything())).thenReturn([]);
       when(gameRepository.bulkUpdate(anything())).thenResolve(err(new Error(mockedErrorMessage)));
 
       const result = await gameService.scheduleGames(anything());
@@ -228,6 +250,7 @@ describe('GameService', () => {
       when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
       when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), numberOfPitches)).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
 
       const result = await gameService.scheduleGames({
@@ -272,6 +295,7 @@ describe('GameService', () => {
       when(gameRepository.sortByGroupAndNumber()).thenResolve(ok(games.map(buildGameEntityFromGame)));
       when(teamRepository.findAll()).thenResolve(ok([teams[0], teams[1], teams[2]].map(buildTeamEntityFromTeam)));
       when(matchDistributionService.distributeMatchSlots(anything(), numberOfPitches)).thenReturn(matchPlan);
+      when(matchValidationService.validateMatchPlan(matchPlan)).thenReturn([]);
       when(gameRepository.bulkUpdate(anything())).thenResolve(ok(undefined));
 
       const result = await gameService.scheduleGames({

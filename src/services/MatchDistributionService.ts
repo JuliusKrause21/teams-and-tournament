@@ -32,6 +32,7 @@ export class MatchDistributionService {
     return this.distribute(matchPlan, numberOfPitches);
   }
 
+  // TODO: Add timeout as break criteria and return err
   private generateMatchPlanPerGroup(group: Group): MatchPlan {
     const matchPlan: MatchPlan = [];
     const games = this.generateGames(group.teams);
@@ -84,7 +85,7 @@ export class MatchDistributionService {
     const usedIdsOfSlots: UsedIdsOfSlot[] = [];
     let slot = 1;
 
-    // TODO: Add timeout to avoid infinite loop
+    // TODO: Add timeout to avoid infinite loop and throw error if exceeded
     while (matchPlan.find((game) => !game.slot)) {
       const gamesWithoutSlot = matchPlan.filter((game) => !game.slot);
       let gameIndex = 0;
