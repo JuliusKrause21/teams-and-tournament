@@ -112,7 +112,10 @@ export class GameService {
         return {
           ...game,
           schedule: {
-            date: DateTime.fromISO(scheduleOptions.date ?? '').toISODate({ format: 'extended' }) ?? '',
+            date:
+              DateTime.fromISO(scheduleOptions.date ?? '')
+                .toUTC()
+                .toISODate({ format: 'extended' }) ?? '',
             start:
               scheduleOptions.date === undefined ||
               scheduleOptions.playTimeInMinutes === undefined ||
@@ -122,6 +125,7 @@ export class GameService {
                     .plus({
                       minutes: slot * scheduleOptions.playTimeInMinutes + slot * scheduleOptions.breakBetweenInMinutes,
                     })
+                    .toUTC()
                     .toISOTime({ suppressMilliseconds: true, includeOffset: false }) ?? ''),
             durationInMinutes: scheduleOptions.playTimeInMinutes,
             location: scheduleOptions.location ?? 'First pitch',

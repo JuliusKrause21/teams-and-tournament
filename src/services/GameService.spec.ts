@@ -222,25 +222,26 @@ describe('GameService', () => {
       expect(result).toEqual(err(new Error(mockedErrorMessage)));
     });
 
+    // TODO: Mock date and time correctly --> ci fails because of a different ISO time or switch to utc
     test('to schedule games on one pitch', async () => {
       const numberOfPitches = 1;
       const matchPlan = games.map((game) => ({ ...game, slot: numberOfPitches }));
       const expectedSchedule: GameSchedule[] = [
         {
           date: '2024-08-22',
-          start: '12:00:00',
+          start: '10:00:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
         {
           date: '2024-08-22',
-          start: '12:50:00',
+          start: '10:50:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
         {
           date: '2024-08-22',
-          start: '13:40:00',
+          start: '11:40:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
@@ -273,19 +274,19 @@ describe('GameService', () => {
       const expectedSchedule: GameSchedule[] = [
         {
           date: '2024-08-22',
-          start: '12:00:00',
+          start: '10:00:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
         {
           date: '2024-08-22',
-          start: '12:00:00',
+          start: '10:00:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
         {
           date: '2024-08-22',
-          start: '12:50:00',
+          start: '10:50:00',
           durationInMinutes: 45,
           location: 'pitch bitch',
         },
